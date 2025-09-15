@@ -10,7 +10,14 @@ for file in json_files:
         data = json.load(f)
     curr_data = data["segments"]
     for itr in curr_data:
-        clean_json.append({'video_name':name,'text' : itr['text'],'start' : f"{itr['start']:.2f}",'end' : f"{itr['end']:.2f}"})
+        
+        clean_json.append({
+            'video_name':name,
+            'text' : itr['text'],
+            'start' : f"{itr['start']:.2f}",
+            'end' : f"{itr['end']:.2f}"
+            })
+        
     with open(f"clean_json_data/{file}", "w") as f:
-        json.dump(clean_json,f,indent = 4)
+        json.dump({"chunks":clean_json,"full_text":data["text"]},f,indent = 4)
         
