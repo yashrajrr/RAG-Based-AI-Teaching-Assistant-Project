@@ -4,6 +4,7 @@ import requests
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
+import joblib
 
 def create_embedding(text_list):
     response = requests.post("http://localhost:11434/api/embed",json={
@@ -33,8 +34,9 @@ for file in clean_json_files:
     print(f"Done with Embedding file {file}")
 # parsing to pandas
 df = pd.DataFrame.from_records(records)
-df.to_csv("output.csv",index=False)
+joblib.dump(df,'dataframe.joblib')
 
+"""
 question = input("Ask Your Question : ")
 question_embedding = create_embedding([question])[0]
 
@@ -51,4 +53,7 @@ max_indices = similarity.argsort()[::-1][0:5]
 
 print(max_indices)
 for i in max_indices:
-    print(df[df['id'] == max_indices[i]]["text"])
+    # print(df[df['id'] == i]["text"])
+    print(df.loc[i,'text'])
+
+"""
