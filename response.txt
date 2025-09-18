@@ -1,0 +1,5 @@
+To help with your question about which language is easy to learn, I looked at the subtitles from the video "Python in 100 Seconds".
+
+ Python is mentioned as arguably being the most popular language in the world because it's easy to learn. 
+
+ You can find this explanation starting at 00:05 and ending at 00:09.

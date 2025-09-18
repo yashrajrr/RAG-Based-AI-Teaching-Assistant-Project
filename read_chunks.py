@@ -35,25 +35,3 @@ for file in clean_json_files:
 # parsing to pandas
 df = pd.DataFrame.from_records(records)
 joblib.dump(df,'dataframe.joblib')
-
-"""
-question = input("Ask Your Question : ")
-question_embedding = create_embedding([question])[0]
-
-# print(question_embedding)
-
-print("print df embedding content")
-
-# print(np.vstack(df.embedding.values))
-# print(np.vstack(df.embedding).shape)
-
-# performing similarity with normal embedding and cosine embedding
-similarity = cosine_similarity(np.vstack(df.embedding.values),[question_embedding]).flatten()
-max_indices = similarity.argsort()[::-1][0:5]
-
-print(max_indices)
-for i in max_indices:
-    # print(df[df['id'] == i]["text"])
-    print(df.loc[i,'text'])
-
-"""
