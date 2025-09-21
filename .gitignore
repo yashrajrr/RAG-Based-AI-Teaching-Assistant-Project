@@ -1,1 +1,4 @@
-__pycache__
+*.pth
+*.joblib
+*.pt
+__pycache__/
