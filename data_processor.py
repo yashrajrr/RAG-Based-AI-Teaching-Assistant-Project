@@ -33,7 +33,10 @@ def to_df():
             chunk_id+=1
             records.append(chunk)
         print(f"Done with Embedding file {file}")
-    
-    
+
     df = pd.DataFrame.from_records(records)
     joblib.dump(df,'dataframe.joblib')
+    
+    videos_dir = 'videos'
+    video_files = [f for f in os.listdir(videos_dir) if os.path.isfile(os.path.join(videos_dir, f))]
+    joblib.dump(video_files, 'processed_videos.joblib')

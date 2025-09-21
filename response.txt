@@ -1,5 +1,0 @@
-I can help you find where the instructor talks about data in the videos.
-
-The instructor mentions "big data analysis" and talks about Python being the language of choice for this, so let's look at that video. 
-
-The relevant part is from 'Python in 100 Seconds', starting at 00:29 and ending at 00:33. The instructor explains how Python is used for big data analysis with popular frameworks like Django.

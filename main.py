@@ -1,22 +1,36 @@
+import os
+import joblib
 import video_tranformer 
 import audio_transformer
 import json_processor
 import data_processor
 import get_output
 
+dataframe_path = 'dataframe.joblib'
+processed_list_path = 'processed_videos.joblib'
+videos_dir = 'videos'
 
-print("Processing Videos")
-video_tranformer.to_audio()
+if not os.path.exists(dataframe_path) or not os.path.exists(processed_list_path):
+    reprocess = True
+else:
+    current_videos = sorted([f for f in os.listdir(videos_dir) if os.path.isfile(os.path.join(videos_dir, f))])
+    processed_videos = joblib.load(processed_list_path)
+    reprocess = current_videos != processed_videos
 
-print("Converting Audios to JSON data")
-audio_transformer.to_json()
 
-print("Preprocessing Json data")
-json_processor.cleaning_json()
+if reprocess:
+    print("Processing Videos")
+    video_tranformer.to_audio()
 
-print("Performing embeddings and saving in dataframe")
-data_processor.to_df()
+    print("\n"*2,"Converting Audios to JSON data")
+    audio_transformer.to_json()
 
-print("\n"*100)
+    print("\n"*2,"Preprocessing JSON data")
+    json_processor.cleaning_json()
+
+    print("\n"*2,"Performing embeddings and saving in dataframe")
+    data_processor.to_df()
+else:
+    print("\n"*2,"Dataframe is up to date, skipping processing steps.")
+
 get_output.get_response()
-
