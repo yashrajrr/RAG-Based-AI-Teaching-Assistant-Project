@@ -19,18 +19,18 @@ else:
 
 
 if reprocess:
-    print("Processing Videos")
+    print("Processing Videos","\n"*1)
     video_tranformer.to_audio()
 
-    print("\n"*2,"Converting Audios to JSON data")
+    print("\n"*2,"Converting Audios to JSON data","\n"*1)
     audio_transformer.to_json()
 
-    print("\n"*2,"Preprocessing JSON data")
+    print("\n"*2,"Preprocessing JSON data","\n"*1)
     json_processor.cleaning_json()
 
-    print("\n"*2,"Performing embeddings and saving in dataframe")
+    print("\n"*2,"Performing embeddings and saving in dataframe","\n"*1)
     data_processor.to_df()
 else:
-    print("\n"*2,"Dataframe is up to date, skipping processing steps.")
+    print("\n"*2,"Dataframe is up to date, skipping processing steps.","\n"*1)
 
 get_output.get_response()

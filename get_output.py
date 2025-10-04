@@ -34,6 +34,7 @@ def get_response():
 
 
     df = joblib.load('dataframe.joblib')
+    print("\n"*5)
     question = input("Ask Your Question : ")
     question_embedding = create_embedding([question])[0]
 
