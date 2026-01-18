@@ -1,6 +1,10 @@
-whisper
-joblib
-pandas
-requests
-scikit-learn
-numpy
+whisper~=1.1.10
+joblib~=1.5.2
+pandas~=2.2.3
+requests~=2.32.3
+scikit-learn~=1.7.2
+numpy~=2.2.4
+
+sentence-transformers~=5.1.1
+openai-whisper~=20250625
+cohere~=5.18.0

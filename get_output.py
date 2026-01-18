@@ -1,18 +1,47 @@
 import requests
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
-import pandas as pd
+# import pandas as pd
 import joblib
 import json
+import os
+# from google import genai
+from dotenv import load_dotenv
+# from sentence_transformers import SentenceTransformer
+# model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+# client = genai.Client(api_key = os.getenv("GEMINI_API_KEY"))
+import cohere
+
+load_dotenv()
+co = cohere.ClientV2(os.getenv("COHERE_API_KEY"))
 
 def get_response():
     def create_embedding(text_list):
+        """
         response = requests.post("http://localhost:11434/api/embed",json={
             "model" : "bge-m3",
             "input": text_list
         })
+        """
+        """
+        response = client.models.embed_content(
+            model="gemini-embedding-001",
+            contents= text_list
+        )
 
-        embedding = response.json()["embeddings"]
+        embedding = response.embeddings
+        return embedding
+        """
+        """
+        embeddings = model.encode(text_list)
+        return embeddings
+        """
+        embedding = co.embed(
+            inputs=text_list,
+            model="embed-v4.0",
+            input_type="classification",
+            embedding_types=["float"],
+        )
         return embedding
 
     def inference(prompt: str) -> str:

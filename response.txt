@@ -1,0 +1,3 @@
+It looks like we're discussing programming concepts! I noticed that you've mentioned "TensorFlow in 100 Seconds", which seems related to our current topic. However, I don't see any mentions of "Python" or a direct question about TensorFlow.
+
+Would you like some help understanding a specific aspect of TensorFlow?

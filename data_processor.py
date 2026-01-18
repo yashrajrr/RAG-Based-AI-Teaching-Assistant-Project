@@ -1,21 +1,49 @@
 import os 
 import json
-import requests
+# import requests
 import pandas as pd
 import joblib
+# from google import genai
+from dotenv import load_dotenv
+# from sentence_transformers import SentenceTransformer
+import cohere
 
+
+
+load_dotenv()
+co = cohere.ClientV2(os.getenv("COHERE_API_KEY"))
+# model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+# client = genai.Client(api_key = os.getenv("GEMINI_API_KEY"))
 
 def to_df():
     
     def create_embedding(text_list):
+        """
         response = requests.post("http://localhost:11434/api/embed",json={
             "model" : "bge-m3",
             "input": text_list
         })
-
-        embedding = response.json()["embeddings"]
+        """
+        """
+        response = client.models.embed_content(
+            model="gemini-embedding-001",
+            contents= text_list
+        )
+        
+        embedding = response.embeddings
         return embedding
-
+        """
+        """
+        embeddings = model.encode(text_list)
+        return embeddings
+        """
+        embedding = co.embed(
+            inputs=text_list,
+            model="embed-v4.0",
+            input_type="classification",
+            embedding_types=["float"],
+        )
+        return embedding
 
     clean_json_files = os.listdir("clean_json_data")
     records =[]
