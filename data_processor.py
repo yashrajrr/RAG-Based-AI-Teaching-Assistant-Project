@@ -3,21 +3,12 @@ import json
 import pandas as pd
 import joblib
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
-
 from sentence_transformers import SentenceTransformer
 
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 # ---------- ENV & CLIENT ----------
 load_dotenv()
-
-API_KEY = os.getenv("GEMINI_API_KEY")
-if not API_KEY:
-    raise RuntimeError("GEMINI_API_KEY not found in environment")
-
-client = genai.Client(api_key=API_KEY)
 
 
 # ---------- EMBEDDING ----------

@@ -2,4 +2,4 @@
 *.joblib
 *.pt
 __pycache__/
-.env
+*.env

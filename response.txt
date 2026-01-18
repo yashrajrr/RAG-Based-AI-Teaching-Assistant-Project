@@ -1,8 +1,1 @@
-Hello! If you're interested in learning about machine learning, you might find the "TensorFlow in 100 Seconds" video particularly useful, as it covers key concepts related to machine learning and deep learning. Here are some specific parts to check out:
-
-- At **00:00–00:07**, it introduces TensorFlow as an open-source machine learning framework commonly used for building deep neural networks.
-- Around **00:16–00:21**, it explains that TensorFlow is essentially a library for programming with linear algebra and statistics, which are core to machine learning.
-- From **00:35–00:38**, it highlights how TensorFlow makes deep learning more accessible to average developers.
-- For a bit more technical detail, **01:21–01:26** discusses its API integration for different user levels.
-
-Additionally, the "Python in 100 Seconds" video mentions machine learning briefly at **00:33–00:38**, noting Python's role in starting to learn code for machine learning. These segments should give you a solid foundation—happy learning!
+The video 'Python in 100 Seconds' addresses why Python is great for learning. Specifically, from 00:33 to 00:38, it states that many students choose Python to start learning to code due to its emphasis on simplicity and accessibility. This segment explains Python's beginner-friendly nature, which could help you assess its suitability for learning.

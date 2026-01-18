@@ -78,6 +78,8 @@ def get_response():
     - Give a short, helpful explanation guiding the student to that part of the video.
 
     2. If the question is unrelated to the course, politely say you can only answer questions about the course content.
+    
+    3. The output will be displayed in terminal so make sure to format professionally WITHOUT USING **.
     """
 
     response = inference(prompt)
