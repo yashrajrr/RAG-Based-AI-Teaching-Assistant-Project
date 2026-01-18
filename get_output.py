@@ -1,66 +1,38 @@
-import requests
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
-# import pandas as pd
 import joblib
-import json
 import os
-# from google import genai
 from dotenv import load_dotenv
-# from sentence_transformers import SentenceTransformer
-# model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-# client = genai.Client(api_key = os.getenv("GEMINI_API_KEY"))
-import cohere
+from openai import OpenAI
+from sentence_transformers import SentenceTransformer
 
 load_dotenv()
-co = cohere.ClientV2(os.getenv("COHERE_API_KEY"))
+
+client = os.getenv('GEMINI_API_KEY')
 
 def get_response():
-    def create_embedding(text_list):
-        """
-        response = requests.post("http://localhost:11434/api/embed",json={
-            "model" : "bge-m3",
-            "input": text_list
-        })
-        """
-        """
-        response = client.models.embed_content(
-            model="gemini-embedding-001",
-            contents= text_list
-        )
-
-        embedding = response.embeddings
-        return embedding
-        """
-        """
-        embeddings = model.encode(text_list)
+    def create_embedding(texts):
+        if not texts:
+            return []
+        model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+        embeddings = model.encode(texts)
         return embeddings
-        """
-        embedding = co.embed(
-            inputs=text_list,
-            model="embed-v4.0",
-            input_type="classification",
-            embedding_types=["float"],
-        )
-        return embedding
 
     def inference(prompt: str) -> str:
-        with requests.post(
-            "http://localhost:11434/api/generate",
-            json={"model": "llama3.2", "prompt": prompt, "stream": True},
-            stream=True
-        ) as r:
-            output = []
-            for line in r.iter_lines():
-                if line:
-                    chunk = json.loads(line.decode("utf-8"))
-                    if "response" in chunk:
-                        text = chunk["response"]
-                        print(text, end="", flush=True)  
-                        output.append(text)
-            print()  
-            return "".join(output)
+            client = OpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=os.getenv("MIMO_API_KEY")
+            )
 
+            response = client.chat.completions.create(
+                model="xiaomi/mimo-v2-flash:free",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                extra_body={"reasoning": {"enabled": True}}
+            )
+
+            return response.choices[0].message.content
 
     df = joblib.load('dataframe.joblib')
     print("\n"*5)
@@ -109,8 +81,10 @@ def get_response():
     """
 
     response = inference(prompt)
-    with open("response.txt",'w') as f:
+
+    with open("response.txt", "w", encoding="utf-8") as f:
         f.write(response)
-        
+
     print(response)
+
 
