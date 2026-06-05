@@ -17,12 +17,12 @@ def create_embeddings(texts: list[str]) -> list[list[float]]:
         return []
     model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
     embeddings = model.encode(texts)
-
-    return embeddings
+    
+    return embeddings.tolist()
 
 
 # ---------- MAIN PIPELINE ----------
-def build_dataframe(
+def to_build_dataframe(
     json_dir="clean_json_data",
     videos_dir="videos",
     df_out="dataframe.joblib",
@@ -83,4 +83,4 @@ def build_dataframe(
 
 # ---------- RUN ----------
 if __name__ == "__main__":
-    build_dataframe()
+    to_build_dataframe()

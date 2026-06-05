@@ -2,7 +2,7 @@ import os
 import json
 
 
-def cleaning_json():
+def to_clean_json():
     json_files = os.listdir('json_data')
     os.makedirs("clean_json_data",exist_ok=True)
     for file in json_files:

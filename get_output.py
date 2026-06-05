@@ -18,21 +18,21 @@ def get_response():
         embeddings = model.encode(texts)
         return embeddings
 
-    def inference(prompt: str) -> str:
+    def inference(prompt: str) -> str | None:
             client = OpenAI(
                 base_url="https://openrouter.ai/api/v1",
                 api_key=os.getenv("MIMO_API_KEY")
             )
 
             response = client.chat.completions.create(
-                model="xiaomi/mimo-v2-flash:free",
+                model="nvidia/nemotron-3-ultra-550b-a55b:free",
                 messages=[
                     {"role": "user", "content": prompt}
                 ],
                 extra_body={"reasoning": {"enabled": True}}
             )
-
-            return response.choices[0].message.content
+            content = response.choices[0].message.content
+            return content 
 
     df = joblib.load('dataframe.joblib')
     print("\n"*5)
@@ -40,7 +40,10 @@ def get_response():
     question_embedding = create_embedding([question])[0]
 
     # performing similarity with normal embedding and cosine embedding
-    similarity = cosine_similarity(np.vstack(df.embedding.values),[question_embedding]).flatten()
+    similarity = cosine_similarity(
+        np.vstack(df.embedding.values),
+        question_embedding.reshape(1,-1) # converting to 2D numpy array 
+        ).flatten()
 
     top_results = 5
     max_indices = similarity.argsort()[::-1][0:top_results]
@@ -79,14 +82,18 @@ def get_response():
 
     2. If the question is unrelated to the course, politely say you can only answer questions about the course content.
     
-    3. The output will be displayed in terminal so make sure to format professionally WITHOUT USING **.
+    3. The output will be displayed in terminal so make sure to format professionally.
+
+    4. Using of ** to bold the output is prohibited.
     """
 
     response = inference(prompt)
+    if response is None:
+        response = "No response generated. Please try again."
 
     with open("response.txt", "w", encoding="utf-8") as f:
         f.write(response)
-
+        
     print(response)
 
 

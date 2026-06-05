@@ -1,9 +1,9 @@
 import os
 import joblib
-import video_tranformer 
-import audio_transformer
-import json_processor
-import data_processor
+import process_video 
+import process_audio
+import process_json
+import process_data
 import get_output
 
 dataframe_path = 'dataframe.joblib'
@@ -20,16 +20,16 @@ else:
 
 if reprocess:
     print("Processing Videos","\n"*1)
-    video_tranformer.to_audio()
+    process_video.to_audio()
 
     print("\n"*2,"Converting Audios to JSON data","\n"*1)
-    audio_transformer.to_json()
+    process_audio.to_json()
 
     print("\n"*2,"Preprocessing JSON data","\n"*1)
-    json_processor.cleaning_json()
+    process_json.to_clean_json()
 
     print("\n"*2,"Performing embeddings and saving in dataframe","\n"*1)
-    data_processor.to_df()
+    process_data.to_build_dataframe()
 else:
     print("\n"*2,"Dataframe is up to date, skipping processing steps.","\n"*1)
 
