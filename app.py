@@ -218,14 +218,14 @@ def show_chat(session_id):
 
         if mode == "quiz":
             quiz_topic = merge_quiz_topic(user_input, selected_tags)
-            result, answer_key, chunks, quiz_items = create_quiz(quiz_topic, quiz_count, video_name)
-            result = clean_output(result)
-            answer_key = clean_output(answer_key)
-            sources = build_sources(chunks)
             try:
                 quiz_count_value = int(quiz_count)
             except (TypeError, ValueError):
                 quiz_count_value = 5
+            result, answer_key, chunks, quiz_items = create_quiz(quiz_topic, quiz_count_value, video_name)
+            result = clean_output(result)
+            answer_key = clean_output(answer_key)
+            sources = build_sources(chunks)
             quiz_meta = {
                 "count": quiz_count_value,
                 "video_name": video_name,
