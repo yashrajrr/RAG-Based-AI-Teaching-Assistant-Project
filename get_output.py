@@ -1,4 +1,5 @@
 import os
+import re
 
 import joblib
 import numpy as np
@@ -11,8 +12,14 @@ load_dotenv()
 
 # Load once
 df = joblib.load("dataframe.joblib")
-
 stored_embeddings = np.vstack(df.embedding.values)
+TAG_STOPWORDS = {
+    "about", "after", "also", "because", "been", "being", "from", "have",
+    "into", "like", "more", "most", "that", "their", "then", "there",
+    "these", "they", "this", "when", "where", "which", "with", "your",
+    "what", "will", "would", "could", "should", "using", "used", "uses",
+    "just", "some", "than", "them", "were", "very", "video", "course"
+}
 
 embedding_model = SentenceTransformer(
     "sentence-transformers/all-MiniLM-L6-v2"
@@ -24,27 +31,66 @@ def create_embedding(texts):
 
     return embedding_model.encode(texts, convert_to_numpy=True)
 
+
+def reload_dataframe():
+    global df, stored_embeddings
+    df = joblib.load("dataframe.joblib")
+    stored_embeddings = np.vstack(df.embedding.values)
+
+
+def get_topic_tags(limit=16):
+    tags = []
+
+    for video_name in sorted(df["video_name"].dropna().unique()):
+        tags.append(str(video_name))
+
+    text = " ".join(df["text"].dropna().astype(str).tolist()).lower()
+    words = re.findall(r"[a-zA-Z][a-zA-Z0-9+#.-]{3,}", text)
+    counts = {}
+    for word in words:
+        if word in TAG_STOPWORDS:
+            continue
+        counts[word] = counts.get(word, 0) + 1
+
+    for word, _count in sorted(counts.items(), key=lambda item: item[1], reverse=True):
+        label = word.replace("-", " ").title()
+        if label not in tags:
+            tags.append(label)
+        if len(tags) >= limit:
+            break
+
+    return tags[:limit]
+
 def format_timestamp(seconds):
     seconds = float(seconds)
     minutes, secs = divmod(round(seconds), 60)
     return f"{minutes:02d}:{secs:02d}"
 
 
-def retrieve_chunks(question, top_results=5):
+def retrieve_chunks(question, top_results=5, video_name=""):
     """
     Returns top matching subtitle chunks.
     """
 
     question_embedding = np.array(create_embedding([question])[0])
 
+    search_df = df
+    embeddings = stored_embeddings
+
+    if video_name:
+        filtered_df = df[df["video_name"] == video_name].copy()
+        if not filtered_df.empty:
+            search_df = filtered_df.reset_index(drop=True)
+            embeddings = np.vstack(search_df.embedding.values)
+
     similarity = cosine_similarity(
-        stored_embeddings,
+        embeddings,
         question_embedding.reshape(1, -1)
     ).flatten()
     
     max_indices = similarity.argsort()[::-1][:top_results]
 
-    results_df = df.loc[max_indices].copy()
+    results_df = search_df.iloc[max_indices].copy()
     results_df["start"] = results_df["start"].apply(
         format_timestamp
     )
@@ -100,6 +146,14 @@ def inference(prompt):
     return message
 
 
+def clean_output(text):
+    text = text.replace("**", "")
+    text = text.replace("###", "")
+    text = "\n".join(line.strip() for line in text.splitlines())
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
 def generate_response(question, chunks):
     """
     Sends context to LLM and returns answer.
@@ -114,18 +168,23 @@ def generate_response(question, chunks):
     "{question}"
 
     Instructions:
-    1. If the question relates to the course content:
-       - Never mention JSON.
-       - Identify the relevant video(s).
-       - Provide timestamp range.
-       - Give a short explanation.
-       - Only answer using the provided subtitle chunks.
+    - Answer in this exact simple format:
 
-    2. If unrelated, politely refuse.
+      Direct Answer:
+      Give a clear 2-4 sentence answer to the student's question.
 
-    3. Professional formatting.
+      Watch Here:
+      Video: video name
+      Time: start-end
 
-    4. Do not use markdown bold.
+      Why This Part Helps:
+      Explain in 1-2 short sentences why this timestamp is useful.
+
+    - Only use the provided subtitle chunks.
+    - Do not quote the chunks unless needed.
+    - Do not say "subtitle chunk", "available content", "JSON", or "retrieved chunks".
+    - Do not use markdown bold, headings with #, or long bullet lists.
+    - If the question is unrelated, say: "This topic is not clearly covered in the course videos."
     """
 
     response = inference(prompt)
@@ -133,31 +192,44 @@ def generate_response(question, chunks):
     if response is None:
         response = "No response generated. Please try again."
 
-    return response
+    return clean_output(response)
 
-def generate_quiz(topic, chunks):
+def generate_quiz(topic, chunks, quiz_count=5, video_name=""):
+    scope = f'Only create questions about the selected video: "{video_name}".' if video_name else "Use any relevant course video."
     prompt = f"""
     You are an AI teaching assistant creating a quiz from course video transcripts.
 
     Topic:
     "{topic}"
 
+    Quiz size:
+    Generate exactly {quiz_count} multiple-choice questions.
+
+    Scope:
+    {scope}
+
     Course chunks:
     {chunks}
-
-    Generate exactly 5 multiple-choice questions from the provided course chunks.
 
     Return two sections:
 
     STUDENT_QUIZ:
-    - Show only the question and 4 options labeled A, B, C, and D.
+    1. Question text
+    A. Option text
+    B. Option text
+    C. Option text
+    D. Option text
+
+    Repeat the same format for every question.
     - Do not show correct answers.
     - Do not show explanations.
 
     ANSWER_KEY:
-    - For each question, include correct option.
-    - Include short explanation.
-    - Include source video and timestamp.
+    1. Correct: A
+    Explanation: short explanation
+    Source: video name start-end
+
+    Repeat the same format for every question.
 
     Use all provided chunks across the quiz. Do not create all questions from only one chunk unless the topic appears only there.
     Each question should be based on a different idea from the retrieved chunks when possible.
@@ -166,31 +238,112 @@ def generate_quiz(topic, chunks):
     Do not mention JSON or raw chunks.
     """
 
-    return inference(prompt)
+    return clean_output(inference(prompt))
+
+
+def parse_quiz_items(student_quiz, answer_key):
+    question_pattern = re.compile(
+        r"(?ms)^\s*(\d+)[\).\s]+(.+?)(?=^\s*\d+[\).\s]+|\Z)"
+    )
+    option_pattern = re.compile(
+        r"(?ms)^\s*([A-D])[\).:-]\s*(.+?)(?=^\s*[A-D][\).:-]\s*|\Z)"
+    )
+    answer_pattern = re.compile(
+        r"(?ms)^\s*(\d+)[\).\s]+.*?Correct:\s*([A-D]).*?"
+        r"Explanation:\s*(.*?)(?:\n\s*Source:\s*(.*?))?(?=^\s*\d+[\).\s]+|\Z)"
+    )
+
+    answers = {}
+    for match in answer_pattern.finditer(answer_key):
+        number = int(match.group(1))
+        answers[number] = {
+            "correct": match.group(2).strip(),
+            "explanation": clean_output(match.group(3) or ""),
+            "source": clean_output(match.group(4) or "")
+        }
+
+    items = []
+    for match in question_pattern.finditer(student_quiz):
+        number = int(match.group(1))
+        block = clean_output(match.group(2))
+        option_matches = list(option_pattern.finditer(block))
+        if len(option_matches) < 4:
+            continue
+
+        question_text = block[:option_matches[0].start()].strip()
+        options = {
+            option_match.group(1): clean_output(option_match.group(2))
+            for option_match in option_matches[:4]
+        }
+
+        answer = answers.get(number, {})
+        items.append({
+            "number": number,
+            "question": clean_output(question_text),
+            "options": options,
+            "correct": answer.get("correct", ""),
+            "explanation": answer.get("explanation", ""),
+            "source": answer.get("source", "")
+        })
+
+    return items
+
 
 def split_quiz_output(quiz_output):
-    student_marker = "STUDENT_QUIZ:"
-    answer_marker = "ANSWER_KEY:"
-
-    if answer_marker not in quiz_output:
+    answer_match = re.search(r"(?im)^\s*-{0,3}\s*ANSWER_KEY\s*:?\s*$", quiz_output)
+    if not answer_match:
         return quiz_output.strip(), ""
 
-    student_part = quiz_output
-    if student_marker in quiz_output:
-        student_part = quiz_output.split(student_marker, 1)[1]
+    student_part = quiz_output[:answer_match.start()]
+    answer_part = quiz_output[answer_match.end():]
 
-    student_part, answer_part = student_part.split(answer_marker, 1)
+    student_part = re.sub(r"(?im)^\s*-{0,3}\s*STUDENT_QUIZ\s*:?\s*$", "", student_part, count=1)
+    student_part = re.sub(r"(?m)^\s*-{3,}\s*$", "", student_part)
+    answer_part = re.sub(r"(?m)^\s*-{3,}\s*$", "", answer_part)
+
     return student_part.strip(), answer_part.strip()
 
 
-def create_quiz(topic):
-    if not topic.strip():
-        return "Please enter a quiz topic.", "", []
+def repair_quiz_items_from_text(message):
+    answer = message.get("answer", "")
+    answer_key = message.get("answer_key", "")
+    if not answer_key:
+        _student_quiz, answer_key = split_quiz_output(answer)
 
-    chunks = retrieve_chunks(topic, top_results=10)
-    quiz_output = generate_quiz(topic, chunks)
+    if not answer_key:
+        return message.get("quiz_items", [])
+
+    student_quiz, _unused_answer_key = split_quiz_output(answer)
+    parsed_items = parse_quiz_items(student_quiz, answer_key)
+    parsed_by_number = {item.get("number"): item for item in parsed_items}
+    repaired_items = []
+
+    for item in message.get("quiz_items", []):
+        parsed = parsed_by_number.get(item.get("number"), {})
+        repaired = dict(item)
+        repaired["correct"] = item.get("correct") or parsed.get("correct", "")
+        repaired["explanation"] = item.get("explanation") or parsed.get("explanation", "")
+        repaired["source"] = item.get("source") or parsed.get("source", "")
+        repaired_items.append(repaired)
+
+    return repaired_items or parsed_items
+
+
+def create_quiz(topic, quiz_count=5, video_name=""):
+    if not topic.strip():
+        return "Please enter a quiz topic.", "", [], []
+
+    try:
+        quiz_count = int(quiz_count)
+    except (TypeError, ValueError):
+        quiz_count = 5
+    quiz_count = max(1, min(quiz_count, 20))
+
+    chunks = retrieve_chunks(topic, top_results=max(10, quiz_count * 2), video_name=video_name)
+    quiz_output = generate_quiz(topic, chunks, quiz_count, video_name)
     student_quiz, answer_key = split_quiz_output(quiz_output)
-    return student_quiz, answer_key, chunks
+    quiz_items = parse_quiz_items(student_quiz, answer_key)
+    return student_quiz, answer_key, chunks, quiz_items
 
 
 def ask_question(question):

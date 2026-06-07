@@ -45,7 +45,7 @@ def to_build_dataframe(
         if not texts:
             continue
 
-        print(f"Embedding → {file}")
+        print(f"Embedding {file}")
         embeddings = create_embeddings(texts)
 
         if len(embeddings) != len(texts):

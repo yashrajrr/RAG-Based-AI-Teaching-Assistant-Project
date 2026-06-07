@@ -1,152 +1,407 @@
-# RAG-Based AI Teaching Assistant for Educational Videos
+# Memora: Semantic Learning System
 
-## Project Description
+Memora is a semantic learning assistant for educational videos. It converts uploaded lecture videos into searchable transcript chunks, creates local embeddings for semantic retrieval, and lets students ask questions or generate interactive quizzes from the video content.
 
-This project is an AI-powered teaching assistant that processes educational videos to enable interactive question-answering based on the video content. It leverages Retrieval-Augmented Generation (RAG) techniques to convert videos into searchable knowledge bases, allowing users to ask questions and receive accurate, context-aware responses with references to specific video timestamps.
+The project uses a Retrieval-Augmented Generation (RAG) workflow: retrieve the most relevant video transcript chunks first, then send only that focused context to an LLM for answers or quiz generation.
 
 ## Features
 
-- **Video Processing Pipeline**: Automated conversion of videos to audio, transcription, and data cleaning.
-- **Embedding-Based Search**: Uses sentence transformers to create embeddings for efficient similarity search.
-- **Interactive Q&A**: Command-line interface for asking questions about video content.
-- **Timestamp References**: Responses include relevant video timestamps for easy navigation.
-- **Persistent Storage**: Processed data is cached to avoid reprocessing unchanged videos.
+- Upload and process educational videos from the web interface.
+- Convert video to audio with ffmpeg.
+- Transcribe audio locally with Whisper.
+- Clean transcript segments into timestamped chunks.
+- Generate local semantic embeddings with Sentence Transformers.
+- Ask questions against uploaded video content.
+- Generate interactive quizzes from selected tags, custom topics, specific videos, or all videos.
+- Submit quiz answers in-page without refreshing the whole screen.
+- View quiz reports with history, scores, strong topics, and weak topics.
+- Save chat and quiz sessions in `chat_history.json`.
+- Cache processed transcript embeddings in `dataframe.joblib`.
 
-## Prerequisites
+## How It Works
 
-- Python 3.8 or higher
-- `ffmpeg` installed and accessible in system PATH
-- API keys for external services (see Setup section)
+Memora has two main phases: processing and retrieval.
 
-## Installation
+### 1. Video Processing
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd rag-ai-teaching-assistant
-   ```
+When a video is uploaded:
 
-2. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+1. The video is saved in `videos/`.
+2. `process_video.py` extracts audio into `audios/`.
+3. `process_audio.py` transcribes the audio using Whisper and saves raw JSON in `json_data/`.
+4. `process_json.py` cleans transcript segments and saves structured chunks in `clean_json_data/`.
+5. `process_data.py` embeds each chunk and saves everything into `dataframe.joblib`.
 
-3. Install `ffmpeg`:
-   - **Windows**: Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH.
-   - **macOS**: `brew install ffmpeg`
-   - **Linux**: `sudo apt install ffmpeg`
+Each clean chunk contains:
 
-## Setup
+- video name
+- transcript text
+- start timestamp
+- end timestamp
+- embedding vector
 
-1. Create a `.env` file in the project root with your API keys:
-   ```
-   MIMO_API_KEY=your_openrouter_api_key_here
-   GEMINI_API_KEY=your_gemini_api_key_here  # Currently unused, but loaded
-   ```
+### 2. Question Answering and Quiz Generation
 
-2. Obtain API keys:
-   - **OpenRouter API Key**: Sign up at [openrouter.ai](https://openrouter.ai) and get your API key. This is used for LLM inference.
-   - **Gemini API Key**: Get from [Google AI Studio](https://makersuite.google.com/app/apikey) (currently not used in the code).
+When the user asks a question or requests a quiz:
 
-## Usage
+1. The user query/topic is embedded locally.
+2. Memora compares that query embedding with saved transcript embeddings using cosine similarity.
+3. The top matching chunks are selected.
+4. Only those chunks are sent to the configured LLM through OpenRouter.
+5. The LLM generates an answer or quiz from the retrieved video context.
 
-1. Place your educational videos in the `videos/` directory.
+## Why It Feels Fast
 
-2. Run the main script to process videos and generate embeddings:
-   ```bash
-   python main.py
-   ```
+Memora is fast during chat and quiz usage because the expensive embedding work is already done during video processing.
 
-3. The script will:
-   - Check if videos have been processed before.
-   - If new or changed videos are detected, run the full pipeline.
-   - Prompt for questions once processing is complete.
+It does not re-embed all videos every time you ask something. Instead:
 
-4. Enter your question when prompted and receive a response with video references.
+1. Transcript chunk embeddings are created once and saved in `dataframe.joblib`.
+2. During chat, only the current question/topic is embedded.
+3. That one query vector is compared against the saved vectors using fast local vector math.
 
-5. Responses are also saved to `response.txt`.
+The embedding model is:
+
+```text
+sentence-transformers/all-MiniLM-L6-v2
+```
+
+This is a small, efficient Sentence Transformers model. It is downloaded/cached from Hugging Face the first time, then it runs locally on your machine. Embeddings are not generated through a Hugging Face API.
+
+The live retrieval step is fast because it mainly does:
+
+```python
+cosine_similarity(stored_embeddings, question_embedding)
+```
+
+That is much cheaper than transcribing videos or calling an LLM over the full transcript.
+
+## Local vs API Components
+
+Memora uses a mix of local models and API-based LLM generation:
+
+| Task | Tool | Runs where |
+| --- | --- | --- |
+| Video to audio | ffmpeg / imageio-ffmpeg | Local |
+| Speech transcription | Whisper | Local |
+| Embeddings | Sentence Transformers | Local |
+| Similarity search | scikit-learn cosine similarity | Local |
+| Final answer / quiz generation | OpenRouter model | API |
 
 ## Project Structure
 
-```
+```text
 .
-├── main.py                 # Main orchestrator script
-├── video_tranformer.py     # Video to audio conversion
-├── audio_transformer.py    # Audio transcription using Whisper
-├── json_processor.py       # JSON cleaning and preprocessing
-├── data_processor.py       # Embedding generation and dataframe creation
-├── get_output.py           # Q&A interface and response generation
-├── requirements.txt        # Python dependencies
-├── .env                    # Environment variables (create this)
-├── videos/                 # Input video files
+├── app.py                  # Flask web application
+├── main.py                 # Command-line workflow
+├── get_output.py           # Retrieval, LLM prompts, quiz parsing
+├── chat_history.py         # Session and quiz history storage
+├── process_video.py        # Video to audio conversion
+├── process_audio.py        # Whisper transcription
+├── process_json.py         # Transcript cleaning
+├── process_data.py         # Embedding generation
+├── templates/
+│   ├── index.html          # Chat and quiz UI
+│   ├── videos.html         # Video upload page
+│   └── quiz_report.html    # Quiz report page
+├── videos/                 # Uploaded videos
 ├── audios/                 # Extracted audio files
-├── json_data/              # Raw transcription JSON
-├── clean_json_data/        # Processed JSON with chunks
-├── dataframe.joblib        # Embedded data storage
-├── processed_videos.joblib # List of processed videos
-└── response.txt            # Latest Q&A response
+├── json_data/              # Raw Whisper output
+├── clean_json_data/        # Clean timestamped transcript chunks
+├── dataframe.joblib        # Saved chunks + embeddings
+├── processed_videos.joblib # Processed video cache
+├── chat_history.json       # Chat and quiz history
+├── requirements.txt
+├── .env                    # Local environment variables
+└── LICENSE
 ```
 
-## Workflow
+## Requirements
 
-1. **Video to Audio Conversion**
-   - Videos are converted to MP3 using `ffmpeg`.
+- Python 3.10 or newer recommended
+- Internet connection for first-time model downloads and OpenRouter calls
+- OpenRouter API key
 
-2. **Audio Transcription**
-   - Audio files are transcribed to JSON using OpenAI's Whisper model (small variant).
+System ffmpeg is optional because the project includes `imageio-ffmpeg`, which provides a bundled ffmpeg binary. If you already have ffmpeg installed and available in PATH, Memora can use that too.
 
-3. **JSON Cleaning and Preprocessing**
-   - Raw transcription segments are extracted and structured into chunks with timestamps.
+## Installation
 
-4. **Embedding Generation**
-   - Text chunks are embedded using Sentence Transformers (all-MiniLM-L6-v2).
-   - Embeddings are stored in a pandas DataFrame.
+1. Clone or download the project.
 
-5. **Question Answering**
-   - User questions are embedded and compared to video content embeddings using cosine similarity.
-   - Top similar chunks are retrieved and sent to an LLM for response generation.
-   - Responses include video names and timestamp ranges.
+2. Open a terminal in the project folder.
 
-## API Details
+3. Create and activate a virtual environment:
 
-- **Transcription**: OpenAI Whisper (local, no API key required)
-- **Embeddings**: Sentence Transformers (local)
-- **LLM Inference**: OpenRouter API using Xiaomi MIMO v2 Flash model
-- **Similarity Search**: Scikit-learn cosine similarity
+```bash
+python -m venv .venv
+```
 
-## Output
+Windows PowerShell:
 
-- **Console**: Interactive Q&A with formatted responses
-- **response.txt**: Latest answer saved to file
-- **dataframe.joblib**: Persistent storage of embedded chunks
-- **processed_videos.joblib**: Cache of processed video filenames
+```bash
+.venv\Scripts\Activate.ps1
+```
+
+Command Prompt:
+
+```bash
+.venv\Scripts\activate.bat
+```
+
+macOS/Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+4. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Environment Setup
+
+Create a `.env` file in the project root:
+
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+OPENROUTER_MODEL=your_model_id_here
+WHISPER_MODEL=tiny
+```
+
+Example:
+
+```env
+OPENROUTER_API_KEY=sk-or-v1-your-key
+OPENROUTER_MODEL=nvidia/llama-3.1-nemotron-nano-8b-v1:free
+WHISPER_MODEL=tiny
+```
+
+Notes:
+
+- `OPENROUTER_API_KEY` is required for LLM answers and quiz generation.
+- `OPENROUTER_MODEL` controls which OpenRouter model is used.
+- `WHISPER_MODEL` controls local transcription speed and quality.
+- Do not commit your `.env` file.
+
+## Running the Web App
+
+Start the Flask app:
+
+```bash
+python app.py
+```
+
+Open:
+
+```text
+http://127.0.0.1:5000/
+```
+
+Main pages:
+
+- `/` - chat and quiz sessions
+- `/videos` - upload and process videos
+- `/quiz-report` - quiz history, scores, weak topics, strong topics
+
+## Running the CLI
+
+You can also use the command-line workflow:
+
+```bash
+python main.py
+```
+
+The CLI checks whether videos have changed, processes them if needed, then lets you ask questions or generate quizzes.
+
+## Uploading Videos
+
+1. Go to `/videos`.
+2. Select a video file.
+3. Click **Upload and Process**.
+4. Wait for the processing message.
+
+Supported extensions:
+
+```text
+mp4, webm, mov, mkv, avi
+```
+
+Processing may take time depending on:
+
+- video length
+- CPU speed
+- Whisper model size
+- whether models are already downloaded
+
+## Whisper Model Speed vs Quality
+
+`WHISPER_MODEL=tiny` is the default because it is much faster for uploads.
+
+Common options:
+
+```env
+WHISPER_MODEL=tiny
+WHISPER_MODEL=base
+WHISPER_MODEL=small
+WHISPER_MODEL=medium
+```
+
+Tradeoff:
+
+- `tiny` is fastest, lower accuracy.
+- `base` is still fast, better accuracy.
+- `small` is slower, better transcription.
+- `medium` is much slower on CPU.
+
+If upload processing feels too slow, use:
+
+```env
+WHISPER_MODEL=tiny
+```
+
+If transcription quality is weak, try:
+
+```env
+WHISPER_MODEL=base
+```
+
+or:
+
+```env
+WHISPER_MODEL=small
+```
+
+## Changing the LLM Model
+
+The LLM model is selected in `.env`:
+
+```env
+OPENROUTER_MODEL=model/provider-id
+```
+
+For example:
+
+```env
+OPENROUTER_MODEL=nvidia/llama-3.1-nemotron-nano-8b-v1:free
+```
+
+or:
+
+```env
+OPENROUTER_MODEL=openai/gpt-oss-20b:free
+```
+
+Use a model available in your OpenRouter account. Free models may be rate-limited, so if you see a `429` error, wait and retry or switch to another model.
+
+## Changing the Embedding Model
+
+The embedding model is currently set in `get_output.py` and `process_data.py`:
+
+```python
+SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+```
+
+To use another local Sentence Transformers model:
+
+1. Replace the model name in both files.
+2. Delete or rebuild `dataframe.joblib`.
+3. Re-run video processing so all chunks are embedded with the new model.
+
+Example alternatives:
+
+```text
+sentence-transformers/all-mpnet-base-v2
+BAAI/bge-small-en-v1.5
+BAAI/bge-base-en-v1.5
+intfloat/e5-small-v2
+```
+
+Important: the query embedding model and stored chunk embedding model must match. If you change the model only in one place, retrieval quality may break because vectors will not be compatible.
+
+## Rebuilding Embeddings
+
+If you change videos, transcript files, or the embedding model, rebuild embeddings:
+
+```bash
+python process_data.py
+```
+
+Or upload/process a video through the UI, which rebuilds `dataframe.joblib` after processing.
+
+## Data Files
+
+Generated files:
+
+- `audios/*.mp3`
+- `json_data/*.json`
+- `clean_json_data/*.json`
+- `dataframe.joblib`
+- `processed_videos.joblib`
+- `chat_history.json`
+
+These are runtime/project data files and may become large. Decide whether to commit them based on your project needs.
 
 ## Troubleshooting
 
-- **ffmpeg not found**: Ensure ffmpeg is installed and in your system PATH.
-- **API errors**: Check your API keys in `.env` file.
-- **Processing fails**: Ensure videos are in supported formats (e.g., .webm, .mp4).
-- **No response**: Verify that videos contain speech content and processing completed successfully.
+### Upload looks instant but video is not searchable
 
-## Contributing
+Check `/videos` for a flash message. Also verify that files were created in:
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+```text
+audios/
+json_data/
+clean_json_data/
+```
+
+If no transcript files appear, processing did not complete.
+
+### ffmpeg not found
+
+Memora tries to use system ffmpeg first, then falls back to `imageio-ffmpeg`.
+
+If it still fails:
+
+```bash
+pip install imageio-ffmpeg
+```
+
+or install ffmpeg manually and add it to PATH.
+
+### LLM returns 429
+
+This means the selected OpenRouter model is rate-limited. Try:
+
+- waiting a few minutes
+- switching `OPENROUTER_MODEL`
+- using a paid model
+- adding your own provider key in OpenRouter
+
+### Quiz score is wrong
+
+Memora parses `ANSWER_KEY` from the LLM output and stores correct answers in `chat_history.json`. If the LLM returns a malformed quiz, scoring can be affected. The app includes repair logic for common formats such as:
+
+```text
+ANSWER_KEY
+ANSWER_KEY:
+STUDENT_QUIZ
+STUDENT_QUIZ:
+```
+
+### Retrieval gives weak answers
+
+Possible reasons:
+
+- transcript quality is poor
+- video has unclear audio
+- `WHISPER_MODEL=tiny` missed words
+- the question is unrelated to uploaded videos
+- the embedding model is too small for your domain
+
+Try a better Whisper model or a stronger embedding model.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Memora is free to use under the MIT License. See [LICENSE](LICENSE).
 
-## Notes
-
-- Currently supports English language videos.
-- Optimized for educational content with clear speech.
-- Processing time depends on video length and hardware.
-- API usage may incur costs depending on your OpenRouter plan.
-
----
-
-This project demonstrates the power of RAG techniques for educational content, enabling interactive learning experiences through AI-powered video analysis.

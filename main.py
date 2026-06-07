@@ -34,7 +34,7 @@ if reprocess:
 else:
     print("\n"*2,"Dataframe is up to date, skipping processing steps.","\n"*1)
 
-print("Choose Mode:")
+"""print("Choose Mode:")
 print("1. Ask Question")
 print("2. Generate Quiz")
 
@@ -56,7 +56,7 @@ if choice == "1":
 
 elif choice == "2":
     topic = input("Enter Quiz Topic: ")
-    quiz, answer_key, chunks = create_quiz(topic)
+    quiz, answer_key, chunks, _quiz_items = create_quiz(topic)
     if quiz:
         refined_quiz = quiz.replace("**","")
         print(refined_quiz)
@@ -70,7 +70,7 @@ elif choice == "2":
         save_chat(topic, f"{refined_quiz}\n\nAnswer Key:\n{answer_key}", sources, mode="quiz")
 
 else:
-    print("Invalid choice")
+    print("Invalid choice")"""
 
 
 
