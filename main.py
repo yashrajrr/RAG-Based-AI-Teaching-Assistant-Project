@@ -56,15 +56,18 @@ if choice == "1":
 
 elif choice == "2":
     topic = input("Enter Quiz Topic: ")
-    quiz, chunks = create_quiz(topic)
+    quiz, answer_key, chunks = create_quiz(topic)
     if quiz:
         refined_quiz = quiz.replace("**","")
         print(refined_quiz)
+        if answer_key:
+            print("\nAnswer Key:\n")
+            print(answer_key.replace("**",""))
         # code for chat history functionality
         for chunk in chunks:
                 source = f"{chunk['video_name']} {chunk['start']}-{chunk['end']}"
                 sources.append(source)
-        save_chat(topic, refined_quiz, sources, mode="quiz")
+        save_chat(topic, f"{refined_quiz}\n\nAnswer Key:\n{answer_key}", sources, mode="quiz")
 
 else:
     print("Invalid choice")

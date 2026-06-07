@@ -1,10 +1,11 @@
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-import joblib
 import os
+
+import joblib
+import numpy as np
 from dotenv import load_dotenv
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
 
 load_dotenv()
 
@@ -17,44 +18,11 @@ embedding_model = SentenceTransformer(
     "sentence-transformers/all-MiniLM-L6-v2"
 )
 
-"""
 def create_embedding(texts):
     if not texts:
         return []
 
-    client = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key=os.getenv("OPENROUTER_API_KEY"),
-    )
-
-    try:
-        embedding = client.embeddings.create(
-            model="nvidia/llama-nemotron-embed-vl-1b-v2:free",
-            input=texts,
-            encoding_format="float"
-        )
-    except Exception:
-        return embedding_model.encode(texts)
-
-    data = getattr(embedding, "data", None)
-    if data:
-        embeddings = []
-        for item in data:
-            if isinstance(item, dict):
-                embeddings.append(item.get("embedding"))
-            else:
-                embeddings.append(getattr(item, "embedding", None))
-
-        if all(e is not None for e in embeddings):
-            return embeddings
-
-    return embedding_model.encode(texts)
-"""
-def create_embedding(texts):
-    if not texts:
-        return []
-
-    return embedding_model.encode(texts)
+    return embedding_model.encode(texts, convert_to_numpy=True)
 
 def format_timestamp(seconds):
     seconds = float(seconds)
@@ -100,25 +68,36 @@ def retrieve_chunks(question, top_results=5):
 
 
 def inference(prompt):
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        return "OpenRouter API key is missing. Please add OPENROUTER_API_KEY to your .env file."
+
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
-        api_key=os.getenv("OPENROUTER_API_KEY")
+        api_key=api_key
     )
 
-    response = client.chat.completions.create(
-        model="nvidia/nemotron-3-ultra-550b-a55b:free",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )
+    try:
+        response = client.chat.completions.create(
+            model=os.getenv("OPENROUTER_MODEL", "openai/gpt-oss-20b:free"),
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
+    except Exception as error:
+        return f"Could not generate a response: {error}"
 
     if not response.choices:
-        return "No response generated."
+        return "No response generated. The selected model may be unavailable. Try changing OPENROUTER_MODEL in .env."
 
-    return response.choices[0].message.content
+    message = response.choices[0].message.content
+    if not message:
+        return "The model returned an empty response. Try another OpenRouter model."
+
+    return message
 
 
 def generate_response(question, chunks):
@@ -140,6 +119,7 @@ def generate_response(question, chunks):
        - Identify the relevant video(s).
        - Provide timestamp range.
        - Give a short explanation.
+       - Only answer using the provided subtitle chunks.
 
     2. If unrelated, politely refuse.
 
@@ -157,12 +137,20 @@ def generate_response(question, chunks):
 
 def generate_quiz(topic, chunks):
     prompt = f"""
-    Generate exactly 5 MCQs from all provided course chunks.
+    You are an AI teaching assistant creating a quiz from course video transcripts.
+
+    Topic:
+    "{topic}"
+
+    Course chunks:
+    {chunks}
+
+    Generate exactly 5 multiple-choice questions from the provided course chunks.
 
     Return two sections:
 
     STUDENT_QUIZ:
-    - Show only question and options.
+    - Show only the question and 4 options labeled A, B, C, and D.
     - Do not show correct answers.
     - Do not show explanations.
 
@@ -172,16 +160,37 @@ def generate_quiz(topic, chunks):
     - Include source video and timestamp.
 
     Use all provided chunks across the quiz. Do not create all questions from only one chunk unless the topic appears only there.
-
     Each question should be based on a different idea from the retrieved chunks when possible.
+    If the topic is not covered in the provided chunks, say: "This topic is not clearly covered in the course videos."
+    Do not invent facts outside the provided chunks.
+    Do not mention JSON or raw chunks.
     """
 
     return inference(prompt)
 
-def create_quiz(topic) :
+def split_quiz_output(quiz_output):
+    student_marker = "STUDENT_QUIZ:"
+    answer_marker = "ANSWER_KEY:"
+
+    if answer_marker not in quiz_output:
+        return quiz_output.strip(), ""
+
+    student_part = quiz_output
+    if student_marker in quiz_output:
+        student_part = quiz_output.split(student_marker, 1)[1]
+
+    student_part, answer_part = student_part.split(answer_marker, 1)
+    return student_part.strip(), answer_part.strip()
+
+
+def create_quiz(topic):
+    if not topic.strip():
+        return "Please enter a quiz topic.", "", []
+
     chunks = retrieve_chunks(topic, top_results=10)
     quiz_output = generate_quiz(topic, chunks)
-    return quiz_output, chunks
+    student_quiz, answer_key = split_quiz_output(quiz_output)
+    return student_quiz, answer_key, chunks
 
 
 def ask_question(question):

@@ -112,5 +112,31 @@
             "TensorFlow in 100 Seconds 01:18-01:21"
         ],
         "mode": "quiz"
+    },
+    {
+        "question": "where can i learn about machine learning",
+        "answer": "Where to learn about machine learning\n\n**Relevant video:** *TensorFlow in 100 Seconds*  \n**Key timestamps to watch:**  \n- 00:00–00:07 – Intro to TensorFlow as an open‑source machine learning framework that powers deep neural networks.  \n- 00:16–00:21 – Explanation that TensorFlow is a library for linear algebra and statistics, the foundation of machine learning.  \n- 00:35–00:38 – Mention that it makes deep learning accessible to the average developer.  \n- 00:33–00:38 – Direct reference to machine learning.  \n\nThese short sections give a concise overview of machine learning concepts and how TensorFlow can be used to start learning and implementing them.",
+        "timestamp": "2026-06-07 18:29:54",
+        "sources": [
+            "Python in 100 Seconds 00:33-00:38",
+            "TensorFlow in 100 Seconds 01:21-01:26",
+            "TensorFlow in 100 Seconds 00:00-00:07",
+            "TensorFlow in 100 Seconds 00:35-00:38",
+            "TensorFlow in 100 Seconds 00:16-00:21"
+        ],
+        "mode": "qa"
+    },
+    {
+        "question": "where can i learn about machine learning",
+        "answer": "The best place to start learning about machine learning in our collection is the **“TensorFlow in 100 Seconds”** video.  \nKey moments covering machine learning concepts are:\n\n- **00:00–00:07** – “TensorFlow, an open‑source machine learning framework famous for powering deep neural networks with high‑level code.”\n- **00:16–00:21** – “At its core, it's just a library for programming with linear algebra and statistics.”\n- **00:33–00:38** – “…makes deep learning accessible to the average developer.”\n\nThese sections introduce the fundamentals of machine learning, explain how TensorFlow is used as a tool, and highlight its accessibility for beginners. Watching this segment gives you a concise overview of what to expect when you start learning machine learning.",
+        "timestamp": "2026-06-07 18:29:56",
+        "sources": [
+            "Python in 100 Seconds 00:33-00:38",
+            "TensorFlow in 100 Seconds 01:21-01:26",
+            "TensorFlow in 100 Seconds 00:00-00:07",
+            "TensorFlow in 100 Seconds 00:35-00:38",
+            "TensorFlow in 100 Seconds 00:16-00:21"
+        ],
+        "mode": "qa"
     }
 ]

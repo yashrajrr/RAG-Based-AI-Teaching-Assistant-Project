@@ -8,8 +8,14 @@ def load_chat_history():
     if not os.path.exists(HISTORY_FILE):
         return []
 
-    with open(HISTORY_FILE, "r", encoding="utf-8") as file:
-        return json.load(file)
+    if os.path.getsize(HISTORY_FILE) == 0:
+        return []
+
+    try:
+        with open(HISTORY_FILE, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except json.JSONDecodeError:
+        return []
 
 
 def save_chat(question, answer, sources, mode="qa"):

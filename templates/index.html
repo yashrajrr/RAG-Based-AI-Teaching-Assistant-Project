@@ -1,0 +1,247 @@
+<!doctype html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Based AI Teaching Assistant</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c6c6cd;
+            border-radius: 10px;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: "#f7f9fb",
+                        "surface-container": "#eceef0",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "outline-variant": "#c6c6cd",
+                        outline: "#76777d",
+                        primary: "#000000",
+                        secondary: "#4648d4",
+                        "on-surface": "#191c1e",
+                        "on-surface-variant": "#45464d",
+                        "primary-container": "#131b2e",
+                        "on-primary-container": "#7c839b",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#e1e0ff",
+                        "on-secondary-fixed": "#07006c"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        body: ["Inter"],
+                        label: ["JetBrains Mono"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased overflow-hidden">
+    <aside class="h-screen w-64 fixed left-0 top-0 bg-surface border-r border-outline-variant flex flex-col py-8 z-50">
+        <div class="px-6 mb-10">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">school</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-headline font-extrabold text-primary leading-tight">RAG Based<br>AI Teaching Assistant</h1>
+                </div>
+            </div>
+
+            <a href="{{ url_for('index') }}" class="w-full py-4 bg-primary text-on-primary rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95">
+                <span class="material-symbols-outlined">add</span>
+                New Session
+            </a>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto px-2">
+            <div class="px-6 mb-2">
+                <p class="text-xs font-bold text-outline uppercase tracking-wider">Navigation</p>
+            </div>
+
+            <a class="flex items-center gap-3 px-4 py-3 text-secondary border-l-2 border-secondary font-bold hover:bg-surface-container transition-colors" href="{{ url_for('index') }}">
+                <span class="material-symbols-outlined">chat_bubble</span>
+                Current Chat
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+                <span class="material-symbols-outlined">auto_stories</span>
+                Videos
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+                <span class="material-symbols-outlined">quiz</span>
+                Quiz History
+            </a>
+
+            <div class="px-6 mt-8 mb-2">
+                <p class="text-xs font-bold text-outline uppercase tracking-wider">Recent Chats</p>
+            </div>
+
+            <div class="space-y-1">
+                {% for item in history %}
+                    <div class="flex items-start gap-3 px-4 py-2 text-on-surface-variant text-sm hover:bg-surface-container rounded-lg mx-2">
+                        <span class="material-symbols-outlined text-lg mt-0.5">history</span>
+                        <div class="min-w-0">
+                            <p class="truncate font-semibold">{{ item.question }}</p>
+                            <p class="text-xs text-outline uppercase">{{ item.mode }} · {{ item.timestamp }}</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="px-6 py-2 text-sm text-outline">No chats yet.</p>
+                {% endfor %}
+            </div>
+        </nav>
+
+        <div class="mt-auto px-4 border-t border-outline-variant pt-4">
+            <form action="{{ url_for('clear_history') }}" method="post">
+                <button class="w-full px-4 py-3 text-sm text-on-surface-variant hover:bg-surface-container rounded-lg transition-all flex items-center justify-center gap-2" type="submit">
+                    <span class="material-symbols-outlined text-lg">delete</span>
+                    Clear History
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <header class="flex justify-between items-center w-[calc(100%-16rem)] px-10 py-4 ml-64 sticky top-0 z-40 bg-surface-container-lowest shadow-sm">
+        <div class="flex items-center gap-10">
+            <span class="font-headline text-2xl font-black text-primary">ScholarAI Assistant</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="px-4 py-2 bg-secondary-fixed text-on-secondary-fixed font-bold rounded-lg flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">workspace_premium</span>
+                Course Mode
+            </div>
+            <span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
+        </div>
+    </header>
+
+    <main class="ml-64 h-[calc(100vh-64px)] relative flex flex-col bg-surface-bright">
+        <div class="w-full flex justify-center py-8">
+            <div class="bg-surface-container-low p-1 rounded-full flex gap-1 border border-outline-variant shadow-sm">
+                <button type="button" id="mode-qa" onclick="setMode('qa')" class="px-8 py-2 rounded-full font-bold text-sm transition-all">
+                    Ask Question
+                </button>
+                <button type="button" id="mode-quiz" onclick="setMode('quiz')" class="px-8 py-2 rounded-full font-bold text-sm transition-all">
+                    Quiz Generator
+                </button>
+            </div>
+        </div>
+
+        <section class="flex-1 overflow-y-auto px-8 pb-6">
+            <div class="max-w-4xl mx-auto">
+                {% if result %}
+                    <div class="bg-white border border-outline-variant rounded-xl shadow-sm p-6 mb-5">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="material-symbols-outlined text-secondary">{% if mode == 'quiz' %}quiz{% else %}psychology{% endif %}</span>
+                            <h2 class="font-headline text-2xl font-bold text-primary">
+                                {% if mode == 'quiz' %}Generated Quiz{% else %}Answer{% endif %}
+                            </h2>
+                        </div>
+                        <div class="whitespace-pre-wrap leading-7 text-on-surface-variant">{{ result }}</div>
+                    </div>
+
+                    {% if answer_key %}
+                        <details class="bg-white border border-outline-variant rounded-xl shadow-sm p-5 mb-5">
+                            <summary class="cursor-pointer font-bold text-secondary">Show Answer Key</summary>
+                            <div class="whitespace-pre-wrap leading-7 text-on-surface-variant mt-4">{{ answer_key }}</div>
+                        </details>
+                    {% endif %}
+
+                    {% if sources %}
+                        <div class="bg-white border border-outline-variant rounded-xl shadow-sm p-5">
+                            <h3 class="font-bold text-primary mb-3">Sources</h3>
+                            <div class="flex flex-wrap gap-2">
+                                {% for source in sources %}
+                                    <span class="px-3 py-2 bg-surface-container-low rounded-full text-sm text-on-surface-variant border border-outline-variant">{{ source }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="min-h-[58vh] flex flex-col items-center justify-center text-center">
+                        <div class="relative w-64 h-64 mx-auto mb-6">
+                            <div class="absolute inset-0 bg-secondary/5 rounded-full blur-3xl animate-pulse"></div>
+                            <img class="w-full h-full object-contain mix-blend-multiply opacity-80" alt="Open book with glowing learning network" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBF34kWC_YrNRFtjyUthpt7NsRZyoSrw-AFOYu6rzJ-Wy_aeVUPqCqVaDPCIfaIer0LuX321Cygjzw6jBiwjg3UggYRdo5xTlW8Y1mRXzxEDouE31Etslo23AOrdJOPgG_Cgxsk30ZNHCJEfLYXKPvbL1wvnPuovI2EE3jNIvOZ_uVviiTTkP4cigsogoetdF-3MphSSMfiNYHXQQvx8TVJm67Y9Qmf0vl5J7YOELGuzZoouS2YFtErfSOKwtSYPIU6_SNxTHo4tJk">
+                        </div>
+                        <h2 class="font-headline text-5xl leading-tight font-extrabold text-primary mb-3">Ready to assist, Professor.</h2>
+                        <p class="text-lg text-on-surface-variant max-w-xl mx-auto">
+                            Ask a question to find the topic or generate a curriculum-aligned quiz in seconds.
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <footer class="w-full px-8 pb-8">
+            <div class="max-w-4xl mx-auto">
+                <form method="post" class="bg-white rounded-2xl border border-outline-variant shadow-xl p-2 relative focus-within:ring-2 focus-within:ring-secondary/20 transition-all">
+                    <input type="hidden" name="mode" id="mode-input" value="{{ mode }}">
+                    <div class="flex items-end gap-2 px-4 py-2">
+                        <textarea class="flex-1 bg-transparent border-none focus:ring-0 resize-none py-2 px-2 text-base" id="prompt-input" name="user_input" placeholder="Ask ScholarAI anything..." rows="1" required>{{ user_input }}</textarea>
+                        <button class="bg-primary text-on-primary w-10 h-10 rounded-xl flex items-center justify-center hover:bg-secondary transition-all group" type="submit" title="Send">
+                            <span class="material-symbols-outlined group-active:translate-x-1 transition-transform" style="font-variation-settings: 'FILL' 1;">send</span>
+                        </button>
+                    </div>
+                </form>
+                <p class="text-center text-[10px] text-outline mt-4">ScholarAI may provide inaccurate info. Verify important citations.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        function setMode(mode) {
+            const modeInput = document.getElementById("mode-input");
+            const askButton = document.getElementById("mode-qa");
+            const quizButton = document.getElementById("mode-quiz");
+            const promptInput = document.getElementById("prompt-input");
+
+            modeInput.value = mode;
+
+            if (mode === "quiz") {
+                quizButton.className = "px-8 py-2 rounded-full font-bold text-sm transition-all bg-white text-primary shadow-sm";
+                askButton.className = "px-8 py-2 rounded-full font-bold text-sm transition-all text-on-surface-variant hover:bg-surface-container";
+                promptInput.placeholder = "Enter a quiz topic, for example: machine learning";
+            } else {
+                askButton.className = "px-8 py-2 rounded-full font-bold text-sm transition-all bg-white text-primary shadow-sm";
+                quizButton.className = "px-8 py-2 rounded-full font-bold text-sm transition-all text-on-surface-variant hover:bg-surface-container";
+                promptInput.placeholder = "Ask ScholarAI anything...";
+            }
+        }
+
+        const textArea = document.getElementById("prompt-input");
+        textArea.addEventListener("input", function () {
+            this.style.height = "auto";
+            this.style.height = this.scrollHeight + "px";
+            this.style.overflowY = this.scrollHeight > 200 ? "scroll" : "hidden";
+        });
+
+        setMode("{{ mode }}");
+    </script>
+</body>
+</html>
