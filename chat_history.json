@@ -1,0 +1,116 @@
+[
+    {
+        "question": "Where can I learn About the machine learning in this course",
+        "answer": "Based on the available content, machine learning is covered in two videos:\n\nPython in 100 Seconds\n- Timestamp: 00:33 – 00:38\n- Explanation: Mentions that many students choose Python to start learning to code because of its emphasis on machine learning.\n\nTensorFlow in 100 Seconds\n- Timestamp: 00:00 – 00:07\n- Explanation: Introduces TensorFlow as an open‑source machine learning framework famous for powering deep neural networks with high‑level code.\n- Timestamp: 00:16 – 00:21\n- Explanation: Describes the core of TensorFlow as a library for programming with linear algebra and statistics.\n- Timestamp: 00:35 – 00:38\n- Explanation: Highlights features that make deep learning accessible to the average developer.\n- Timestamp: 01:21 – 01:26\n- Explanation: Notes the subclassing API for expert users and integration with beginner‑friendly tools.",
+        "timestamp": "2026-06-05 21:27:49",
+        "sources": [
+            "Python in 100 Seconds 00:33-00:38",
+            "TensorFlow in 100 Seconds 00:16-00:21",
+            "TensorFlow in 100 Seconds 01:21-01:26",
+            "TensorFlow in 100 Seconds 00:00-00:07",
+            "TensorFlow in 100 Seconds 00:35-00:38"
+        ],
+        "mode": "qa"
+    },
+    {
+        "question": "I want to learn about recursion",
+        "answer": "I'm unable to find any information about recursion in the provided video content. The available subtitles cover topics like Java tutorials, Python object-oriented programming, TensorFlow activation functions, and Java variable declarations, but don't mention recursion.\n\nIf you have access to other videos in this series that might cover recursion, I'd be happy to help you find the relevant timestamps.",
+        "timestamp": "2026-06-05 21:30:23",
+        "sources": [
+            "Java in 100 Seconds 02:19-02:21",
+            "Python in 100 Seconds 01:57-02:01",
+            "TensorFlow in 100 Seconds 01:53-02:00",
+            "Java in 100 Seconds 01:21-01:25",
+            "Java in 100 Seconds 01:18-01:21"
+        ],
+        "mode": "qa"
+    },
+    {
+        "question": "java",
+        "answer": "**Quiz: Java Fundamentals (based on \"Java in 100 Seconds\")**\n\n---\n\n### **Question 1**\n**How is Java described in the video?**\n- A) A low-level systems programming language\n- B) A high-level multi-paradigm programming language\n- C) A scripting language for web browsers\n- D) A domain-specific language for data analysis\n\n**Correct Answer: B**\n\n**Explanation:** The video opens by stating: *\"Java, a high-level multi-paradigm programming language famous for its ability to compile...\"*\n\n**Source:** *Java in 100 Seconds* (00:00–00:05)\n\n---\n\n### **Question 2**\n**What key innovation distinguished Java from languages like C or C++?**\n- A) It compiles directly to optimized machine code\n- B) It uses a just-in-time interpreter only\n- C) It compiles to bytecode instead of machine code\n- D) It eliminates the need for a compiler entirely\n\n**Correct Answer: C**\n\n**Explanation:** The video explains: *\"What made Java innovative is that instead of compiling to machine code, like C or C++...\"* — implying Java compiles to an intermediate form (bytecode).\n\n**Source:** *Java in 100 Seconds* (00:30–00:35)\n\n---\n\n### **Question 3**\n**What phrase concludes the \"Java in 100 Seconds\" video?**\n- A) \"Thanks for watching!\"\n- B) \"This has been Java in 100 seconds.\"\n- C) \"Java: write once, run anywhere.\"\n- D) \"Stay tuned for the full tutorial.\"\n\n**Correct Answer: B**\n\n**Explanation:** The video ends with the exact statement: *\"This has been Java in 100 seconds.\"*\n\n**Source:** *Java in 100 Seconds* (02:13–02:15)\n\n---\n\n### **Question 4**\n**What does the speaker announce at the end of the video?**\n- A) A new Java framework release\n- B) A full Java tutorial in this video\n- C) A full Java tutorial in a separate video\n- D) A live coding session next week\n\n**Correct Answer: C**\n\n**Explanation:** The speaker says: *\"...this video, I'll do a full Java tutorial.\"* — indicating the tutorial will be in a different video, not the current one.\n\n**Source:** *Java in 100 Seconds* (02:19–02:21)\n\n---\n\n### **Question 5**\n**At what timestamp does the video display the file extension \".java\"?**\n- A) 00:00–00:05\n- B) 00:30–00:35\n- C) 01:11–01:12\n- D) 02:13–02:15\n\n**Correct Answer: C**\n\n**Explanation:** The text *\".java.\"* appears in the video chunk timestamped 01:11–01:12.\n\n**Source:** *Java in 100 Seconds* (01:11–01:12)",
+        "timestamp": "2026-06-05 21:46:07",
+        "sources": [
+            "Java in 100 Seconds 01:11-01:12",
+            "Java in 100 Seconds 02:13-02:15",
+            "Java in 100 Seconds 00:00-00:05",
+            "Java in 100 Seconds 00:30-00:35",
+            "Java in 100 Seconds 02:19-02:21"
+        ],
+        "mode": "quiz"
+    },
+    {
+        "question": "java",
+        "answer": "I don't see any course chunks provided in your message. Please provide the course content/chunks you'd like me to generate questions from, and I'll create the quiz with both sections as requested.",
+        "timestamp": "2026-06-05 21:55:36",
+        "sources": [
+            "Java in 100 Seconds 01:11-01:12",
+            "Java in 100 Seconds 02:13-02:15",
+            "Java in 100 Seconds 00:00-00:05",
+            "Java in 100 Seconds 00:30-00:35",
+            "Java in 100 Seconds 02:19-02:21",
+            "Java in 100 Seconds 01:06-01:11",
+            "Java in 100 Seconds 02:04-02:05",
+            "Java in 100 Seconds 00:47-00:52",
+            "Java in 100 Seconds 01:12-01:16",
+            "Java in 100 Seconds 00:18-00:20"
+        ],
+        "mode": "quiz"
+    },
+    {
+        "question": "java",
+        "answer": "No response generated.",
+        "timestamp": "2026-06-05 22:02:44",
+        "sources": [
+            "Java in 100 Seconds 01:11-01:12",
+            "Java in 100 Seconds 02:13-02:15",
+            "Java in 100 Seconds 00:00-00:05",
+            "Java in 100 Seconds 00:30-00:35",
+            "Java in 100 Seconds 02:19-02:21"
+        ],
+        "mode": "qa"
+    },
+    {
+        "question": "where can i learn about java ",
+        "answer": "No response generated.",
+        "timestamp": "2026-06-05 22:08:44",
+        "sources": [
+            "Java in 100 Seconds 02:19-02:21",
+            "Java in 100 Seconds 01:06-01:11",
+            "Java in 100 Seconds 01:11-01:12",
+            "Java in 100 Seconds 00:00-00:05",
+            "Java in 100 Seconds 00:30-00:35"
+        ],
+        "mode": "qa"
+    },
+    {
+        "question": "where can i learn about python",
+        "answer": "Based on the video \"Python in 100 Seconds,\" the provided segments discuss what Python is, its design philosophy (like the Zen of Python), and programming paradigms (functional, object-oriented), but they do not mention specific platforms, courses, or resources for learning Python.\n\nTimestamp range: 00:00 – 01:52\n\nIf you are looking for learning resources, you might want to check the video description or search for official documentation (python.org), tutorials, or courses on platforms like Coursera, edX, freeCodeCamp, or YouTube.",
+        "timestamp": "2026-06-07 17:43:41",
+        "sources": [
+            "Python in 100 Seconds 00:33-00:38",
+            "Python in 100 Seconds 01:48-01:52",
+            "Python in 100 Seconds 00:00-00:05",
+            "Python in 100 Seconds 01:23-01:28",
+            "Python in 100 Seconds 00:44-00:48"
+        ],
+        "mode": "qa"
+    },
+    {
+        "question": "where can i learn about machine learning",
+        "answer": "No response generated.",
+        "timestamp": "2026-06-07 17:57:05",
+        "sources": [
+            "Python in 100 Seconds 00:33-00:38",
+            "TensorFlow in 100 Seconds 01:21-01:26",
+            "TensorFlow in 100 Seconds 00:00-00:07",
+            "TensorFlow in 100 Seconds 00:35-00:38",
+            "TensorFlow in 100 Seconds 00:16-00:21",
+            "Python in 100 Seconds 02:01-02:06",
+            "TensorFlow in 100 Seconds 01:10-01:14",
+            "Python in 100 Seconds 00:29-00:33",
+            "TensorFlow in 100 Seconds 01:26-01:31",
+            "TensorFlow in 100 Seconds 01:18-01:21"
+        ],
+        "mode": "quiz"
+    }
+]

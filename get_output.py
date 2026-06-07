@@ -8,92 +8,192 @@ from sentence_transformers import SentenceTransformer
 
 load_dotenv()
 
-client = os.getenv('GEMINI_API_KEY')
+# Load once
+df = joblib.load("dataframe.joblib")
 
-def get_response():
-    def create_embedding(texts):
-        if not texts:
-            return []
-        model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-        embeddings = model.encode(texts)
-        return embeddings
+stored_embeddings = np.vstack(df.embedding.values)
 
-    def inference(prompt: str) -> str | None:
-            client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=os.getenv("MIMO_API_KEY")
-            )
+embedding_model = SentenceTransformer(
+    "sentence-transformers/all-MiniLM-L6-v2"
+)
 
-            response = client.chat.completions.create(
-                model="nvidia/nemotron-3-ultra-550b-a55b:free",
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                extra_body={"reasoning": {"enabled": True}}
-            )
-            content = response.choices[0].message.content
-            return content 
+"""
+def create_embedding(texts):
+    if not texts:
+        return []
 
-    df = joblib.load('dataframe.joblib')
-    print("\n"*5)
-    question = input("Ask Your Question : ")
-    question_embedding = create_embedding([question])[0]
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.getenv("OPENROUTER_API_KEY"),
+    )
 
-    # performing similarity with normal embedding and cosine embedding
+    try:
+        embedding = client.embeddings.create(
+            model="nvidia/llama-nemotron-embed-vl-1b-v2:free",
+            input=texts,
+            encoding_format="float"
+        )
+    except Exception:
+        return embedding_model.encode(texts)
+
+    data = getattr(embedding, "data", None)
+    if data:
+        embeddings = []
+        for item in data:
+            if isinstance(item, dict):
+                embeddings.append(item.get("embedding"))
+            else:
+                embeddings.append(getattr(item, "embedding", None))
+
+        if all(e is not None for e in embeddings):
+            return embeddings
+
+    return embedding_model.encode(texts)
+"""
+def create_embedding(texts):
+    if not texts:
+        return []
+
+    return embedding_model.encode(texts)
+
+def format_timestamp(seconds):
+    seconds = float(seconds)
+    minutes, secs = divmod(round(seconds), 60)
+    return f"{minutes:02d}:{secs:02d}"
+
+
+def retrieve_chunks(question, top_results=5):
+    """
+    Returns top matching subtitle chunks.
+    """
+
+    question_embedding = np.array(create_embedding([question])[0])
+
     similarity = cosine_similarity(
-        np.vstack(df.embedding.values),
-        question_embedding.reshape(1,-1) # converting to 2D numpy array 
-        ).flatten()
+        stored_embeddings,
+        question_embedding.reshape(1, -1)
+    ).flatten()
+    
+    max_indices = similarity.argsort()[::-1][:top_results]
 
-    top_results = 5
-    max_indices = similarity.argsort()[::-1][0:top_results]
+    results_df = df.loc[max_indices].copy()
+    results_df["start"] = results_df["start"].apply(
+        format_timestamp
+    )
+    results_df["end"] = results_df["end"].apply(
+        format_timestamp
+    )
 
-    new_df = df.loc[max_indices]
+    results_df["similarity"] = similarity[max_indices]
+    chunks = results_df[
+        [
+            "video_name",
+            "text",
+            "start",
+            "end",
+            "similarity"
+        ]
+    ].to_dict(orient="records")
 
-    def format_timestamp(seconds):
-        seconds = float(seconds)
-        minutes, secs = divmod(round(seconds), 60)  # round instead of int
-        return f"{minutes:02d}:{secs:02d}"
+
+    return chunks
 
 
-    # Format start & end into mm:ss
-    formatted_df = new_df.copy()
-    formatted_df["start"] = formatted_df["start"].apply(format_timestamp)
-    formatted_df["end"] = formatted_df["end"].apply(format_timestamp)
+def inference(prompt):
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.getenv("OPENROUTER_API_KEY")
+    )
 
-    # Convert to list of dicts for clean JSON
-    subtitle_chunks = formatted_df[["video_name", "text", "start", "end"]].to_dict(orient="records")
+    response = client.chat.completions.create(
+        model="nvidia/nemotron-3-ultra-550b-a55b:free",
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
 
+    if not response.choices:
+        return "No response generated."
+
+    return response.choices[0].message.content
+
+
+def generate_response(question, chunks):
+    """
+    Sends context to LLM and returns answer.
+    """
     prompt = f"""
     You are an assistant helping students learn from videos.
 
-    Here are subtitle chunks (JSON list):
-    {subtitle_chunks}
+    Here are subtitle chunks:
+    {chunks}
 
     User question:
     "{question}"
 
     Instructions:
     1. If the question relates to the course content:
-    - Never Mentioned the json just talk in natural human language
-    - Identify which video(s) contain the answer.
-    - Provide the timestamp range (start–end) in mm:ss format.
-    - Give a short, helpful explanation guiding the student to that part of the video.
+       - Never mention JSON.
+       - Identify the relevant video(s).
+       - Provide timestamp range.
+       - Give a short explanation.
 
-    2. If the question is unrelated to the course, politely say you can only answer questions about the course content.
-    
-    3. The output will be displayed in terminal so make sure to format professionally.
+    2. If unrelated, politely refuse.
 
-    4. Using of ** to bold the output is prohibited.
+    3. Professional formatting.
+
+    4. Do not use markdown bold.
     """
 
     response = inference(prompt)
+
     if response is None:
         response = "No response generated. Please try again."
 
-    with open("response.txt", "w", encoding="utf-8") as f:
-        f.write(response)
-        
-    print(response)
+    return response
+
+def generate_quiz(topic, chunks):
+    prompt = f"""
+    Generate exactly 5 MCQs from all provided course chunks.
+
+    Return two sections:
+
+    STUDENT_QUIZ:
+    - Show only question and options.
+    - Do not show correct answers.
+    - Do not show explanations.
+
+    ANSWER_KEY:
+    - For each question, include correct option.
+    - Include short explanation.
+    - Include source video and timestamp.
+
+    Use all provided chunks across the quiz. Do not create all questions from only one chunk unless the topic appears only there.
+
+    Each question should be based on a different idea from the retrieved chunks when possible.
+    """
+
+    return inference(prompt)
+
+def create_quiz(topic) :
+    chunks = retrieve_chunks(topic, top_results=10)
+    quiz_output = generate_quiz(topic, chunks)
+    return quiz_output, chunks
 
 
+def ask_question(question):
+
+    if not question.strip():
+        return "Please enter a question.", []
+
+    chunks = retrieve_chunks(question)
+
+    answer = generate_response(
+        question,
+        chunks
+    )
+
+    return answer, chunks

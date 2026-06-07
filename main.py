@@ -4,7 +4,8 @@ import process_video
 import process_audio
 import process_json
 import process_data
-import get_output
+from get_output import ask_question,create_quiz
+from chat_history import save_chat
 
 dataframe_path = 'dataframe.joblib'
 processed_list_path = 'processed_videos.joblib'
@@ -33,4 +34,40 @@ if reprocess:
 else:
     print("\n"*2,"Dataframe is up to date, skipping processing steps.","\n"*1)
 
-get_output.get_response()
+print("Choose Mode:")
+print("1. Ask Question")
+print("2. Generate Quiz")
+
+choice = input("Enter choice: ")
+
+sources = []
+
+if choice == "1":
+    question = input("Ask Your Question: ")
+    answer, chunks = ask_question(question)
+    if answer:
+        refined_ans = answer.replace("**","")
+        print(refined_ans)
+        # code for chat history functionality
+        for chunk in chunks:
+                source = f"{chunk['video_name']} {chunk['start']}-{chunk['end']}"
+                sources.append(source)
+        save_chat(question, refined_ans, sources, mode="qa")
+
+elif choice == "2":
+    topic = input("Enter Quiz Topic: ")
+    quiz, chunks = create_quiz(topic)
+    if quiz:
+        refined_quiz = quiz.replace("**","")
+        print(refined_quiz)
+        # code for chat history functionality
+        for chunk in chunks:
+                source = f"{chunk['video_name']} {chunk['start']}-{chunk['end']}"
+                sources.append(source)
+        save_chat(topic, refined_quiz, sources, mode="quiz")
+
+else:
+    print("Invalid choice")
+
+
+
