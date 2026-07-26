@@ -1,4 +1,5 @@
 import os
+import json
 import shutil
 
 from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
@@ -23,6 +24,7 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "memora-dev-secret-key")
 app.config["UPLOAD_FOLDER"] = "videos"
 app.config["MAX_CONTENT_LENGTH"] = 512 * 1024 * 1024
 ALLOWED_VIDEO_EXTENSIONS = {"mp4", "webm", "mov", "mkv", "avi"}
+COURSES_PATH = "courses.json"
 
 
 def build_sources(chunks):
@@ -52,6 +54,136 @@ def get_video_names():
         for filename in os.listdir("clean_json_data")
         if filename.endswith(".json")
     )
+
+
+def course_id_from_name(name):
+    safe_name = secure_filename(name).strip("._-").lower()
+    return safe_name or "course"
+
+
+def load_courses():
+    if not os.path.exists(COURSES_PATH):
+        return []
+
+    try:
+        with open(COURSES_PATH, "r", encoding="utf-8") as file:
+            courses = json.load(file)
+    except (json.JSONDecodeError, OSError):
+        return []
+
+    return courses if isinstance(courses, list) else []
+
+
+def save_courses(courses):
+    with open(COURSES_PATH, "w", encoding="utf-8") as file:
+        json.dump(courses, file, indent=2)
+
+
+def get_courses():
+    courses = load_courses()
+    assigned_videos = {
+        video
+        for course in courses
+        for video in course.get("videos", [])
+    }
+    unassigned_videos = [
+        video for video in get_video_names()
+        if video not in assigned_videos
+    ]
+
+    if unassigned_videos:
+        courses.append({
+            "id": "imported-videos",
+            "name": "Imported Videos",
+            "description": "Videos processed before course folders were created.",
+            "videos": unassigned_videos,
+        })
+
+    return courses
+
+
+def add_video_to_course(video_name, course_dest, course_name, existing_course_id):
+    courses = load_courses()
+
+    if course_dest == "existing" and existing_course_id:
+        course = next((item for item in courses if item.get("id") == existing_course_id), None)
+    else:
+        course = None
+
+    if course is None:
+        name = course_name.strip() or video_name
+        base_id = course_id_from_name(name)
+        course_id = base_id
+        suffix = 2
+        existing_ids = {item.get("id") for item in courses}
+        while course_id in existing_ids:
+            course_id = f"{base_id}-{suffix}"
+            suffix += 1
+
+        course = {
+            "id": course_id,
+            "name": name,
+            "description": "Course folder for uploaded learning videos.",
+            "videos": [],
+        }
+        courses.append(course)
+
+    if video_name not in course["videos"]:
+        course["videos"].append(video_name)
+
+    save_courses(courses)
+
+
+def remove_video_from_course(course_id, video_name):
+    courses = load_courses()
+    kept_courses = []
+
+    for course in courses:
+        if course.get("id") == course_id:
+            course["videos"] = [
+                video for video in course.get("videos", [])
+                if video != video_name
+            ]
+        if course.get("videos"):
+            kept_courses.append(course)
+
+    save_courses(kept_courses)
+
+
+def delete_video_files(video_name):
+    candidates = [
+        ("audios", f"{video_name}.mp3"),
+        ("json_data", f"{video_name}.json"),
+        ("clean_json_data", f"{video_name}.json"),
+    ]
+
+    if os.path.isdir("videos"):
+        for filename in os.listdir("videos"):
+            stem, extension = os.path.splitext(filename)
+            if stem == video_name and extension.lower().lstrip(".") in ALLOWED_VIDEO_EXTENSIONS:
+                candidates.append(("videos", filename))
+
+    for folder, filename in candidates:
+        path = os.path.join(folder, filename)
+        if os.path.exists(path):
+            os.remove(path)
+
+
+def rebuild_dataframe_after_delete():
+    has_clean_json = (
+        os.path.isdir("clean_json_data")
+        and any(filename.endswith(".json") for filename in os.listdir("clean_json_data"))
+    )
+
+    if has_clean_json:
+        process_data.to_build_dataframe()
+        reload_dataframe()
+        return
+
+    for path in ("dataframe.joblib", "processed_videos.joblib"):
+        if os.path.exists(path):
+            os.remove(path)
+    reload_dataframe()
 
 
 def merge_quiz_topic(user_input, selected_tags):
@@ -144,7 +276,7 @@ def get_ffmpeg_exe():
     return ffmpeg_exe
 
 
-def process_uploaded_video(filename):
+def process_uploaded_video(filename, rebuild=True):
     os.makedirs("videos", exist_ok=True)
     os.makedirs("audios", exist_ok=True)
     os.makedirs("json_data", exist_ok=True)
@@ -168,9 +300,21 @@ def process_uploaded_video(filename):
     if not clean_files:
         raise RuntimeError("The transcript was not created from the uploaded video.")
 
+    if rebuild:
+        process_data.to_build_dataframe()
+        reload_dataframe()
+    return clean_files
+
+
+def process_uploaded_video_batch(filenames):
+    processed = []
+    for filename in filenames:
+        process_uploaded_video(filename, rebuild=False)
+        processed.append(os.path.splitext(filename)[0])
+
     process_data.to_build_dataframe()
     reload_dataframe()
-    return clean_files
+    return processed
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -248,24 +392,42 @@ def show_chat(session_id):
 @app.route("/videos", methods=["GET", "POST"])
 def videos_page():
     if request.method == "POST":
-        video = request.files.get("video")
-        if not video or not video.filename:
-            flash("Please select a video file.", "error")
+        uploaded_videos = [
+            video for video in request.files.getlist("video")
+            if video and video.filename
+        ]
+        course_dest = request.form.get("course_dest", "new")
+        course_name = request.form.get("course_name", "")
+        existing_course_id = request.form.get("existing_course", "")
+
+        if not uploaded_videos:
+            flash("Please select at least one video file.", "error")
             return redirect(url_for("videos_page"))
 
-        if not allowed_video_file(video.filename):
-            flash("Unsupported video format. Use mp4, webm, mov, mkv, or avi.", "error")
-            return redirect(url_for("videos_page"))
+        saved_filenames = []
+        for video in uploaded_videos:
+            if not video.filename or not allowed_video_file(video.filename):
+                flash(f"{video.filename} is unsupported. Use mp4, webm, mov, mkv, or avi.", "error")
+                continue
 
-        filename = secure_filename(video.filename)
-        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-        video.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            filename = secure_filename(video.filename)
+            os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+            video.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            saved_filenames.append(filename)
+
+        if not saved_filenames:
+            return redirect(url_for("videos_page"))
 
         try:
-            process_uploaded_video(filename)
-            flash(f"{filename} uploaded and processed successfully.", "success")
+            video_names = process_uploaded_video_batch(saved_filenames)
+            for video_name in video_names:
+                add_video_to_course(video_name, course_dest, course_name, existing_course_id)
+
+            count = len(video_names)
+            label = "video" if count == 1 else "videos"
+            flash(f"{count} {label} uploaded and processed successfully.", "success")
         except Exception as error:
-            flash(f"{filename} was uploaded, but processing failed: {error}", "error")
+            flash(f"Upload saved, but processing failed: {error}", "error")
 
         return redirect(url_for("videos_page"))
 
@@ -273,8 +435,23 @@ def videos_page():
         "videos.html",
         sessions=get_ordered_sessions(),
         videos=get_video_names(),
+        courses=get_courses(),
         active_page="videos",
     )
+
+
+@app.route("/courses/<course_id>/videos/<path:video_name>/delete", methods=["POST"])
+def delete_course_video(course_id, video_name):
+    remove_video_from_course(course_id, video_name)
+    delete_video_files(video_name)
+
+    try:
+        rebuild_dataframe_after_delete()
+        flash(f"{video_name} deleted successfully.", "success")
+    except Exception as error:
+        flash(f"{video_name} was deleted, but rebuilding search data failed: {error}", "error")
+
+    return redirect(url_for("videos_page"))
 
 
 @app.route("/quiz-report")

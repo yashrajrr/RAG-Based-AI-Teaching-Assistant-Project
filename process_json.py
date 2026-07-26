@@ -9,7 +9,7 @@ def to_clean_json(json_filename=None):
 
     for file in json_files:
         path = os.path.join("json_data", file)
-        if not os.path.isfile(path):
+        if not os.path.isfile(path) or not file.endswith(".json"):
             continue
 
         clean_json = []

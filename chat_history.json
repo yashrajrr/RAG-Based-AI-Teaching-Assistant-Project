@@ -58,5 +58,244 @@
                 "timestamp": "2026-07-26 08:56:33"
             }
         ]
+    },
+    {
+        "id": "fd7530ee-dd13-4e69-8d19-c63b9fb56553",
+        "title": "New Chat",
+        "mode": "",
+        "created_at": "2026-07-26 10:27:30",
+        "updated_at": "2026-07-26 10:27:30",
+        "messages": []
+    },
+    {
+        "id": "bfb93506-5911-468a-9a2f-550e0d7064db",
+        "title": "New Chat",
+        "mode": "",
+        "created_at": "2026-07-26 10:38:17",
+        "updated_at": "2026-07-26 10:38:17",
+        "messages": []
+    },
+    {
+        "id": "775177ea-38f7-4457-9fe4-c35ec84333ad",
+        "title": "hi",
+        "mode": "qa",
+        "created_at": "2026-07-26 10:47:09",
+        "updated_at": "2026-07-26 10:54:07",
+        "messages": [
+            {
+                "question": "hi",
+                "answer": "Direct Answer:\nThis topic is not clearly covered in the course videos.",
+                "answer_key": "",
+                "quiz_items": [],
+                "quiz_meta": {},
+                "quiz_submission": null,
+                "sources": [
+                    "PyTorch_in_100_Seconds 01:50-01:51",
+                    "Nvidia_CUDA_in_100_Seconds 01:10-01:11",
+                    "PyTorch_in_100_Seconds 01:45-01:46",
+                    "Nvidia_CUDA_in_100_Seconds 01:27-01:28",
+                    "PyTorch_in_100_Seconds 02:39-02:41"
+                ],
+                "mode": "qa",
+                "timestamp": "2026-07-26 10:47:38"
+            },
+            {
+                "question": "hi",
+                "answer": "This topic is not clearly covered in the course videos.",
+                "answer_key": "",
+                "quiz_items": [],
+                "quiz_meta": {},
+                "quiz_submission": null,
+                "sources": [
+                    "PyTorch_in_100_Seconds 01:50-01:51",
+                    "Nvidia_CUDA_in_100_Seconds 01:10-01:11",
+                    "PyTorch_in_100_Seconds 01:45-01:46",
+                    "Nvidia_CUDA_in_100_Seconds 01:27-01:28",
+                    "PyTorch_in_100_Seconds 02:39-02:41"
+                ],
+                "mode": "qa",
+                "timestamp": "2026-07-26 10:54:07"
+            }
+        ]
+    },
+    {
+        "id": "1e9aa90b-cf90-46f7-bb92-b431acc2d326",
+        "title": "New Chat",
+        "mode": "",
+        "created_at": "2026-07-26 10:54:07",
+        "updated_at": "2026-07-26 10:54:07",
+        "messages": []
+    },
+    {
+        "id": "e0767c7d-9a33-4dc7-b71e-cd2f4166fdf8",
+        "title": "Java in 100 Seconds",
+        "mode": "quiz",
+        "created_at": "2026-07-26 16:25:35",
+        "updated_at": "2026-07-26 16:27:16",
+        "messages": [
+            {
+                "question": "Java in 100 Seconds",
+                "answer": "1. What is the typical file extension for a Java source file?\nA. .jav\nB. .java\nC. .js\nD. .jvm\n\n2. What distinguishes Java from C or C++ in terms of its compilation process?\nA. Compiles directly to machine code,\nB. Compiles to bytecode interpreted by the JVM,\nC. Interprets source code directly,\nD. Compiles to assembly before machine code.\n\n3. What component is required to run Java programs on a system?\nA. Java Development Kit (JDK)\nB. Java Runtime Environment (JRE)\nC. Oracle Database\nD. Apache Server\n\n4. How does a Java .class file execute on a computer?\nA. By the operating system’s native compiler,\nB. Through the Java Virtual Machine,\nC. Using a web browser’s plugin,\nD. Directly by the CPU.\n\n5. What will мәсел the instructor cover in this video?\nA. A full Java tutorial,\nB. Advanced operating impacts,\nC. PyTorch basics,\nD. Python script optimization.",
+                "answer_key": "1. Correct: B\nExplanation: The standard extension for Java source files is .java.\nSource: Java in 100 Seconds 01:11-01:12\n\n2. Correct: B\nExplanation: Java compiles to bytecode, which is then interpreted by the JVM.\nSource: Java in 100 Seconds 00:30-00:35\n\n3. Correct: B\nExplanation: To run Java programs, a system needs the Java Runtime Environment (JRE).\nSource: Java in 100 Seconds 00:47-00:52\n\n4. Correct:ètre B\nExplanation: A compiled Java class file (.class) runs on the Java Virtual Machine.\nSource: Java in 100 Seconds 00:39-00 администра\n\n5. Correct: A\nExplanation: The video promises a comprehensive Java tutorial.\nSource: Java in 100 Seconds 02:19-02:21",
+                "quiz_items": [
+                    {
+                        "number": 1,
+                        "question": "What is the typical file extension for a Java source file?",
+                        "options": {
+                            "A": ".jav",
+                            "B": ".java",
+                            "C": ".js",
+                            "D": ".jvm"
+                        },
+                        "correct": "B",
+                        "explanation": "The standard extension for Java source files is .java.",
+                        "source": "Java in 100 Seconds 01:11-01:12"
+                    },
+                    {
+                        "number": 2,
+                        "question": "What distinguishes Java from C or C++ in terms of its compilation process?",
+                        "options": {
+                            "A": "Compiles directly to machine code,",
+                            "B": "Compiles to bytecode interpreted by the JVM,",
+                            "C": "Interprets source code directly,",
+                            "D": "Compiles to assembly before machine code."
+                        },
+                        "correct": "B",
+                        "explanation": "Java compiles to bytecode, which is then interpreted by the JVM.",
+                        "source": "Java in 100 Seconds 00:30-00:35"
+                    },
+                    {
+                        "number": 3,
+                        "question": "What component is required to run Java programs on a system?",
+                        "options": {
+                            "A": "Java Development Kit (JDK)",
+                            "B": "Java Runtime Environment (JRE)",
+                            "C": "Oracle Database",
+                            "D": "Apache Server"
+                        },
+                        "correct": "B",
+                        "explanation": "To run Java programs, a system needs the Java Runtime Environment (JRE).",
+                        "source": "Java in 100 Seconds 00:47-00:52"
+                    },
+                    {
+                        "number": 4,
+                        "question": "How does a Java .class file execute on a computer?",
+                        "options": {
+                            "A": "By the operating system’s native compiler,",
+                            "B": "Through the Java Virtual Machine,",
+                            "C": "Using a web browser’s plugin,",
+                            "D": "Directly by the CPU."
+                        },
+                        "correct": "A",
+                        "explanation": "The video promises a comprehensive Java tutorial.",
+                        "source": "Java in 100 Seconds 02:19-02:21"
+                    },
+                    {
+                        "number": 5,
+                        "question": "What will мәсел the instructor cover in this video?",
+                        "options": {
+                            "A": "A full Java tutorial,",
+                            "B": "Advanced operating impacts,",
+                            "C": "PyTorch basics,",
+                            "D": "Python script optimization."
+                        },
+                        "correct": "",
+                        "explanation": "",
+                        "source": ""
+                    }
+                ],
+                "quiz_meta": {
+                    "count": 5,
+                    "video_name": "",
+                    "tags": [
+                        "Java in 100 Seconds"
+                    ],
+                    "typed_topic": ""
+                },
+                "quiz_submission": null,
+                "sources": [
+                    "Java in 100 Seconds 02:13-02:15",
+                    "Java in 100 Seconds 01:11-01:12",
+                    "PyTorch_in_100_Seconds 02:37-02:39",
+                    "Python in 100 Seconds 02:15-02:19",
+                    "Java in 100 Seconds 00:30-00:35",
+                    "Java in 100 Seconds 00:47-00:52",
+                    "Java in 100 Seconds 02:19-02:21",
+                    "TensorFlow in 100 Seconds 02:30-02:33",
+                    "Java in 100 Seconds 00:00-00:05",
+                    "Java in 100 Seconds 00:39-00:44"
+                ],
+                "mode": "quiz",
+                "timestamp": "2026-07-26 16:27:16"
+            }
+        ]
+    },
+    {
+        "id": "05952de2-519d-482c-afc2-2b43d19ceefd",
+        "title": "New Chat",
+        "mode": "",
+        "created_at": "2026-07-26 16:29:54",
+        "updated_at": "2026-07-26 16:29:54",
+        "messages": []
+    },
+    {
+        "id": "5b7d838c-3d5a-40f3-9965-e456fd4efeb1",
+        "title": "hi",
+        "mode": "qa",
+        "created_at": "2026-07-26 16:30:04",
+        "updated_at": "2026-07-26 16:33:17",
+        "messages": [
+            {
+                "question": "hi",
+                "answer": "This topic is not stripping clearly covered in the course videos.",
+                "answer_key": "",
+                "quiz_items": [],
+                "quiz_meta": {},
+                "quiz_submission": null,
+                "sources": [
+                    "PyTorch_in_100_Seconds 01:50-01:51",
+                    "Nvidia_CUDA_in_100_Seconds 01:10-01:11",
+                    "PyTorch_in_100_Seconds 01:45-01:46",
+                    "Nvidia_CUDA_in_100_Seconds 01:27-01:28",
+                    "TensorFlow in 100 Seconds 02:35-02:38"
+                ],
+                "mode": "qa",
+                "timestamp": "2026-07-26 16:30:42"
+            },
+            {
+                "question": "python in this course",
+                "answer": "Direct Answer:\nThis video introduces the course by explaining why Python is a popular first language for students — it’s easy to learn and widely used in fields like machine learning. It highlights the language’s simplicity and flexibility, setting the foundation for the rest of the lessons.\n\nWatch Here:\nVideo: Python in 100 Seconds\nTime: 00:33-00:38\n\nWhy This Part Helps:\nIt clarifies the course’s focus on Python and why it’s a useful choice for beginners, giving context for everything that follows.",
+                "answer_key": "",
+                "quiz_items": [],
+                "quiz_meta": {},
+                "quiz_submission": null,
+                "sources": [
+                    "Python in 100 Seconds 00:33-00:38",
+                    "Python in 100 Seconds 01:48-01:52",
+                    "Python in 100 Seconds 00:09-00:14",
+                    "Python in 100 Seconds 01:23-01:28",
+                    "Python in 100 Seconds 00:44-00:48"
+                ],
+                "mode": "qa",
+                "timestamp": "2026-07-26 16:32:21"
+            },
+            {
+                "question": "about machine learning",
+                "answer": "Direct Answer:\nMachine learning is a branch of artificial sulini where computers learn from data to make predictions or decisions. By feeding large amounts of data into models, they automatically discover patterns and refine their accuracy over time. GPUs help accelerate this training by performing many calculations in parallel, which makes deep learning faster and more scalable.\n\nWatch Here:\nVideo: Nvidia_CUDA_in_100_Seconds\nTime: 01:06-01:10\n\nWhy This Part Helps:\nIt demonstrates how GPUs are currently being used to train machine learning models, highlighting the importance of parallel processing for efficient deep learning.",
+                "answer_key": "",
+                "quiz_items": [],
+                "quiz_meta": {},
+                "quiz_submission": null,
+                "sources": [
+                    "Nvidia_CUDA_in_100_Seconds 01:06-01:10",
+                    "PyTorch_in_100_Seconds 00:05-00:07",
+                    "Nvidia_CUDA_in_100_Seconds 00:18-00:22",
+                    "PyTorch_in_100_Seconds 00:23-00:27",
+                    "Nvidia_CUDA_in_100_Seconds 00:22-00:23"
+                ],
+                "mode": "qa",
+                "timestamp": "2026-07-26 16:33:17"
+            }
+        ]
     }
 ]

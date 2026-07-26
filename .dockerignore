@@ -10,3 +10,12 @@ __pycache__/
 Dockerfile
 docker-compose.yml
 README.md
+videos/*
+audios/*
+json_data/*
+clean_json_data/*
+*.joblib
+*.pt
+*.pth
+chat_history.json
+courses.json

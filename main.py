@@ -10,11 +10,19 @@ from chat_history import save_chat
 dataframe_path = 'dataframe.joblib'
 processed_list_path = 'processed_videos.joblib'
 videos_dir = 'videos'
+video_extensions = {'.mp4', '.webm', '.mov', '.mkv', '.avi'}
+
+
+def is_video_file(filename):
+    return os.path.splitext(filename)[1].lower() in video_extensions
 
 if not os.path.exists(dataframe_path) or not os.path.exists(processed_list_path):
     reprocess = True
 else:
-    current_videos = sorted([f for f in os.listdir(videos_dir) if os.path.isfile(os.path.join(videos_dir, f))])
+    current_videos = sorted([
+        f for f in os.listdir(videos_dir)
+        if os.path.isfile(os.path.join(videos_dir, f)) and is_video_file(f)
+    ])
     processed_videos = joblib.load(processed_list_path)
     reprocess = current_videos != processed_videos
 

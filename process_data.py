@@ -5,7 +5,12 @@ import joblib
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov", ".mkv", ".avi"}
+
+
+def is_video_file(filename):
+    return os.path.splitext(filename)[1].lower() in VIDEO_EXTENSIONS
+
 
 # ---------- ENV & CLIENT ----------
 load_dotenv()
@@ -74,7 +79,7 @@ def to_build_dataframe(
     if os.path.isdir(videos_dir):
         videos = [
             f for f in os.listdir(videos_dir)
-            if os.path.isfile(os.path.join(videos_dir, f))
+            if os.path.isfile(os.path.join(videos_dir, f)) and is_video_file(f)
         ]
         joblib.dump(videos, videos_out)
 

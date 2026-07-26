@@ -5,6 +5,12 @@ import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
+AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg"}
+
+
+def is_audio_file(filename):
+    return os.path.splitext(filename)[1].lower() in AUDIO_EXTENSIONS
+
 
 def to_json(audio_filename=None):
     model_name = os.getenv("WHISPER_MODEL", "tiny")
@@ -16,7 +22,7 @@ def to_json(audio_filename=None):
 
     for file_name in audios_files:
         audio_path = os.path.join("audios", file_name)
-        if not os.path.isfile(audio_path):
+        if not os.path.isfile(audio_path) or not is_audio_file(file_name):
             continue
 
         print("Processing file ",file_name)

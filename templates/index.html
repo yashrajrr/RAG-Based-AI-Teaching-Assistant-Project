@@ -24,6 +24,128 @@
             background: #c6c6cd;
             border-radius: 10px;
         }
+
+        .loader {
+            width: 80px;
+            height: 50px;
+            position: relative;
+        }
+
+        .loader-text {
+            position: absolute;
+            top: 0;
+            padding: 0;
+            margin: 0;
+            color: #4648d4;
+            animation: text_713 3.5s ease both infinite;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .load {
+            background-color: #4648d4;
+            border-radius: 50px;
+            display: block;
+            height: 16px;
+            width: 16px;
+            bottom: 0;
+            position: absolute;
+            transform: translateX(64px);
+            animation: loading_713 3.5s ease both infinite;
+        }
+
+        .load::before {
+            position: absolute;
+            content: "";
+            width: 100%;
+            height: 100%;
+            background-color: #c0c1ff;
+            border-radius: inherit;
+            animation: loading2_713 3.5s ease both infinite;
+        }
+
+        @keyframes text_713 {
+            0% {
+                letter-spacing: 1px;
+                transform: translateX(0);
+            }
+
+            40% {
+                letter-spacing: 2px;
+                transform: translateX(26px);
+            }
+
+            80% {
+                letter-spacing: 1px;
+                transform: translateX(32px);
+            }
+
+            90% {
+                letter-spacing: 2px;
+                transform: translateX(0);
+            }
+
+            100% {
+                letter-spacing: 1px;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes loading_713 {
+            0% {
+                width: 16px;
+                transform: translateX(0);
+            }
+
+            40% {
+                width: 100%;
+                transform: translateX(0);
+            }
+
+            80% {
+                width: 16px;
+                transform: translateX(64px);
+            }
+
+            90% {
+                width: 100%;
+                transform: translateX(0);
+            }
+
+            100% {
+                width: 16px;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes loading2_713 {
+            0% {
+                transform: translateX(0);
+                width: 16px;
+            }
+
+            40% {
+                transform: translateX(0%);
+                width: 80%;
+            }
+
+            80% {
+                width: 100%;
+                transform: translateX(0);
+            }
+
+            90% {
+                width: 80%;
+                transform: translateX(15px);
+            }
+
+            100% {
+                transform: translateX(0);
+                width: 16px;
+            }
+        }
     </style>
     <script>
         tailwind.config = {
@@ -256,7 +378,7 @@
 
         <footer class="w-full px-8 pb-8">
             <div class="max-w-4xl mx-auto">
-                <form method="post" action="{% if session %}{{ url_for('show_chat', session_id=session.id) }}{% else %}{{ url_for('index') }}{% endif %}" class="bg-white rounded-2xl border border-outline-variant shadow-xl p-2 relative focus-within:ring-2 focus-within:ring-secondary/20 transition-all">
+                <form method="post" action="{% if session %}{{ url_for('show_chat', session_id=session.id) }}{% else %}{{ url_for('index') }}{% endif %}" class="bg-white rounded-2xl border border-outline-variant shadow-xl p-2 relative focus-within:ring-2 focus-within:ring-secondary/20 transition-all" id="chat-form">
                     <input type="hidden" name="mode" id="mode-input" value="{{ mode }}">
                     {% if has_messages %}
                         <div class="border-b border-outline-variant px-4 py-2 text-xs font-bold uppercase tracking-wide text-outline">
@@ -308,7 +430,13 @@
 
                     <div class="flex items-end gap-2 px-4 py-2">
                         <textarea class="flex-1 bg-transparent border-none focus:ring-0 resize-none py-2 px-2 text-base" id="prompt-input" name="user_input" placeholder="Ask anything from the videos..." rows="1"></textarea>
-                        <button class="bg-primary text-on-primary w-10 h-10 rounded-xl flex items-center justify-center hover:bg-secondary transition-all group" type="submit" title="Send">
+                        <div class="hidden shrink-0 mr-1" id="query-loader" aria-live="polite" aria-label="Query is running">
+                            <div class="loader">
+                                <span class="loader-text">loading</span>
+                                <span class="load"></span>
+                            </div>
+                        </div>
+                        <button class="bg-primary text-on-primary w-10 h-10 rounded-xl flex items-center justify-center hover:bg-secondary transition-all group" id="send-button" type="submit" title="Send">
                             <span class="material-symbols-outlined group-active:translate-x-1 transition-transform" style="font-variation-settings: 'FILL' 1;">send</span>
                         </button>
                     </div>
@@ -319,6 +447,8 @@
     </main>
 
     <script>
+        const pageHasMessages = "{{ 'true' if has_messages else 'false' }}" === "true";
+
         function setMode(mode) {
             const modeInput = document.getElementById("mode-input");
             const askButton = document.getElementById("mode-qa");
@@ -326,7 +456,6 @@
             const promptInput = document.getElementById("prompt-input");
             const quizControls = document.getElementById("quiz-controls");
             const quizSetupPanel = document.getElementById("quiz-setup-panel");
-            const hasMessages = "{{ 'true' if has_messages else 'false' }}" === "true";
 
             modeInput.value = mode;
 
@@ -338,7 +467,7 @@
                     askButton.className = "px-8 py-2 rounded-full font-bold text-sm transition-all text-on-surface-variant hover:bg-surface-container";
                 }
                 quizControls.classList.remove("hidden");
-                if (quizSetupPanel && !hasMessages) {
+                if (quizSetupPanel && !pageHasMessages) {
                     quizSetupPanel.open = true;
                 }
                 promptInput.placeholder = "Enter a quiz topic, for example: Python basics";
@@ -433,15 +562,45 @@
         });
 
         const chatScroller = document.querySelector("section.flex-1.overflow-y-auto");
-        if (chatScroller && hasMessages) {
+        if (chatScroller && pageHasMessages) {
             chatScroller.scrollTop = chatScroller.scrollHeight;
         }
 
         const textArea = document.getElementById("prompt-input");
+        const chatForm = document.getElementById("chat-form");
+        const sendButton = document.getElementById("send-button");
+        const queryLoader = document.getElementById("query-loader");
+
+        function setQueryRunning() {
+            queryLoader.classList.remove("hidden");
+            queryLoader.style.display = "block";
+            sendButton.disabled = true;
+            sendButton.classList.add("opacity-60", "cursor-not-allowed");
+        }
+
         textArea.addEventListener("input", function () {
             this.style.height = "auto";
             this.style.height = this.scrollHeight + "px";
             this.style.overflowY = this.scrollHeight > 200 ? "scroll" : "hidden";
+        });
+
+        textArea.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                if (this.value.trim()) {
+                    setQueryRunning();
+                    chatForm.submit();
+                }
+            }
+        });
+
+        chatForm.addEventListener("submit", function (event) {
+            if (!textArea.value.trim()) {
+                event.preventDefault();
+                return;
+            }
+
+            setQueryRunning();
         });
 
         setMode("{{ mode }}");

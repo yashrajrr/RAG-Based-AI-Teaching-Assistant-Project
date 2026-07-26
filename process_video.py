@@ -1,6 +1,12 @@
 import os
 import subprocess
 
+VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov", ".mkv", ".avi"}
+
+
+def is_video_file(filename):
+    return os.path.splitext(filename)[1].lower() in VIDEO_EXTENSIONS
+
 
 def video_title(filename):
     stem = os.path.splitext(filename)[0]
@@ -15,7 +21,7 @@ def to_audio(video_filename=None, ffmpeg_exe="ffmpeg"):
 
     for video in videos_list:
         input_path = os.path.join("videos", video)
-        if not os.path.isfile(input_path):
+        if not os.path.isfile(input_path) or not is_video_file(video):
             continue
 
         audio_name = f"{video_title(video)}.mp3"
@@ -46,3 +52,4 @@ def to_audio(video_filename=None, ffmpeg_exe="ffmpeg"):
         created_files.append(audio_name)
 
     return created_files
+

@@ -3,60 +3,140 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Upload - Memora</title>
+    <title>Course Management & Upload - Memora</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
+                        background: "#f7f9fb",
                         surface: "#f7f9fb",
-                        "surface-container": "#eceef0",
-                        "surface-container-low": "#f2f4f6",
                         "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container": "#eceef0",
+                        "surface-container-high": "#e6e8ea",
                         "outline-variant": "#c6c6cd",
                         outline: "#76777d",
                         primary: "#000000",
                         secondary: "#4648d4",
+                        "secondary-container": "#6063ee",
+                        "secondary-fixed": "#e1e0ff",
+                        "on-secondary-fixed": "#07006c",
                         "on-surface": "#191c1e",
                         "on-surface-variant": "#45464d",
-                        "on-primary": "#ffffff"
+                        "on-primary-container": "#7c839b",
+                        success: "#207a43",
+                        danger: "#b42318"
                     },
                     borderRadius: {
+                        lg: "0.25rem",
                         xl: "0.5rem",
                         full: "0.75rem"
                     },
                     fontFamily: {
                         headline: ["Manrope"],
-                        body: ["Inter"]
+                        body: ["Inter"],
+                        label: ["JetBrains Mono"]
                     }
                 }
             }
         }
     </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .drop-zone-active {
+            border-color: #4648d4;
+            background-color: rgba(70, 72, 212, 0.04);
+        }
+
+        .sortable-ghost {
+            opacity: 0.45;
+            background-color: #e1e0ff;
+        }
+
+        #sidebar {
+            transition: width 0.25s ease;
+        }
+
+        #sidebar.collapsed {
+            width: 80px;
+        }
+
+        #sidebar.collapsed .sidebar-text,
+        #sidebar.collapsed .sidebar-header-text,
+        #sidebar.collapsed .new-session-text {
+            display: none;
+        }
+
+        #sidebar.collapsed .collapsed-logo {
+            display: flex;
+        }
+
+        #sidebar.collapsed .new-session-btn,
+        #sidebar.collapsed .nav-item {
+            justify-content: center;
+        }
+
+        #sidebar.collapsed .nav-item.active::after {
+            right: 2px;
+        }
+
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background-color: #4648d4;
+            border-radius: 2px 0 0 2px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f7f9fb;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c6c6cd;
+            border-radius: 4px;
+        }
+    </style>
 </head>
-<body class="bg-surface font-body text-on-surface antialiased">
-    <aside class="h-screen w-72 fixed left-0 top-0 bg-surface border-r border-outline-variant flex flex-col py-6 z-50">
+<body class="bg-background text-on-surface font-body h-screen overflow-hidden flex">
+    <aside class="h-screen w-72 flex-shrink-0 bg-surface border-r border-outline-variant flex flex-col py-6 z-50">
         <div class="px-5 mb-6">
             <div class="mb-5">
                 <p class="font-headline text-2xl font-extrabold text-primary leading-tight">Memora</p>
                 <p class="text-sm font-semibold text-on-surface-variant">Semantic Learning System</p>
             </div>
 
-            <a href="{{ url_for('new_session') }}" class="w-full py-4 bg-primary text-on-primary rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90">
+            <a href="{{ url_for('new_session') }}" class="w-full py-4 bg-primary text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95">
                 <span class="material-symbols-outlined">add</span>
                 New Session
             </a>
         </div>
 
         <section class="px-5 mb-6 space-y-2">
-            <a href="{{ url_for('videos_page') }}" class="w-full px-4 py-3 rounded-xl font-bold flex items-center gap-3 border border-outline-variant bg-surface-container text-secondary">
+            <a href="{{ url_for('videos_page') }}" class="w-full px-4 py-3 rounded-xl font-bold flex items-center gap-3 border border-outline-variant hover:bg-surface-container {% if active_page == 'videos' %}bg-surface-container text-secondary{% else %}text-on-surface-variant{% endif %}">
                 <span class="material-symbols-outlined">upload</span>
                 Video Upload
             </a>
-            <a href="{{ url_for('quiz_report') }}" class="w-full px-4 py-3 rounded-xl font-bold flex items-center gap-3 border border-outline-variant text-on-surface-variant hover:bg-surface-container">
+            <a href="{{ url_for('quiz_report') }}" class="w-full px-4 py-3 rounded-xl font-bold flex items-center gap-3 border border-outline-variant hover:bg-surface-container {% if active_page == 'report' %}bg-surface-container text-secondary{% else %}text-on-surface-variant{% endif %}">
                 <span class="material-symbols-outlined">monitoring</span>
                 Quiz Report
             </a>
@@ -66,6 +146,7 @@
             <div class="px-5 mb-2">
                 <p class="text-xs font-bold text-outline uppercase tracking-wider">Recent Chats</p>
             </div>
+
             <div class="space-y-1">
                 {% for item in sessions %}
                     <a href="{{ url_for('show_chat', session_id=item.id) }}" class="flex items-start gap-3 px-4 py-2 text-on-surface-variant text-sm hover:bg-surface-container rounded-lg mx-2">
@@ -80,15 +161,22 @@
                 {% endfor %}
             </div>
         </nav>
-    </aside>
 
-    <main class="ml-72 min-h-screen bg-surface px-8 py-8">
-        <div class="max-w-5xl mx-auto">
-            <div class="mb-8">
-                <h1 class="font-headline text-4xl font-extrabold text-primary">Video Upload</h1>
-                <p class="text-on-surface-variant mt-2">Upload course videos here. Memora will process them for questions, quizzes, tags, and reports.</p>
-                <p class="text-sm text-outline mt-1">Transcription uses the Whisper model from <span class="font-bold">WHISPER_MODEL</span>, defaulting to <span class="font-bold">tiny</span> for faster uploads.</p>
-            </div>
+        <div class="mt-auto px-4 border-t border-outline-variant pt-4">
+            <form action="{{ url_for('clear_history') }}" method="post">
+                <button class="w-full px-4 py-3 text-sm text-on-surface-variant hover:bg-surface-container rounded-lg transition-all flex items-center justify-center gap-2" type="submit">
+                    <span class="material-symbols-outlined text-lg">delete</span>
+                    Clear History
+                </button>
+            </form>
+        </div>
+    </aside>
+    <main class="flex-1 overflow-y-auto h-screen scroll-smooth" id="mainContent">
+        <div class="max-w-[1200px] mx-auto px-8 py-16">
+            <header class="mb-10" id="upload-section">
+                <h2 class="font-headline text-4xl font-extrabold text-on-surface mb-3">Course Management & Upload</h2>
+                <p class="text-on-surface-variant max-w-3xl text-lg leading-8">Organize your academic materials. Upload videos to automatically generate semantic indexes, citations, and interactive quizzes.</p>
+            </header>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -102,31 +190,256 @@
                 {% endif %}
             {% endwith %}
 
-            <form action="{{ url_for('videos_page') }}" method="post" enctype="multipart/form-data" class="bg-white border border-outline-variant rounded-xl p-6 shadow-sm mb-8">
-                <label class="block text-sm font-bold text-on-surface-variant mb-2">Select Video</label>
-                <div class="flex flex-col md:flex-row gap-3">
-                    <input class="flex-1 rounded-lg border-outline-variant bg-surface-container-lowest" type="file" name="video" accept="video/*" required>
-                    <button class="px-5 py-3 rounded-xl bg-primary text-on-primary font-bold flex items-center justify-center gap-2" type="submit">
-                        <span class="material-symbols-outlined">upload</span>
-                        Upload and Process
-                    </button>
+            <form action="{{ url_for('videos_page') }}" method="post" enctype="multipart/form-data" class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 mb-16 shadow-sm" id="uploadForm">
+                <div class="flex flex-col lg:flex-row gap-10">
+                    <label class="flex-1 min-h-[360px] border-2 border-dashed border-outline-variant rounded-xl p-10 flex flex-col items-center justify-center text-center cursor-pointer hover:border-secondary transition-all" id="dropZone" for="videoInput">
+                        <input class="sr-only" id="videoInput" type="file" name="video" accept="video/*" multiple required>
+                        <span class="w-16 h-16 bg-surface-container rounded-xl flex items-center justify-center mb-8">
+                            <span class="material-symbols-outlined text-secondary text-4xl">cloud_upload</span>
+                        </span>
+                        <span class="font-headline text-xl font-extrabold mb-2">Drag & drop course videos</span>
+                        <span class="text-on-surface-variant text-base mb-10">Support for MP4, WEBM, MOV, MKV, and AVI. Max 512MB per file.</span>
+                        <span class="bg-secondary text-white px-8 py-3 rounded-lg font-bold hover:bg-secondary-container transition-all">Select Files</span>
+                        <span class="mt-4 text-sm font-semibold text-on-surface-variant" id="selectedFileName">No files selected</span>
+                        <span class="mt-2 max-w-md text-xs leading-5 text-outline break-words" id="selectedFileList"></span>
+                    </label>
+
+                    <aside class="w-full lg:w-80 space-y-9">
+                        <div>
+                            <p class="font-label text-sm text-on-surface-variant uppercase tracking-wide block mb-6">Destination</p>
+                            <div class="space-y-6">
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input checked class="text-secondary focus:ring-secondary" name="course_dest" type="radio" value="new">
+                                    <span class="text-base font-medium group-hover:text-secondary">Create New Course</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input class="text-secondary focus:ring-secondary" name="course_dest" type="radio" value="existing">
+                                    <span class="text-base font-medium group-hover:text-secondary">Add to Existing</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2" id="courseNameField">
+                            <label class="font-label text-sm text-on-surface-variant block">Course Name</label>
+                            <input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-3 focus:ring-secondary text-base" name="course_name" type="text" placeholder="e.g. Machine Learning Basics">
+                        </div>
+
+                        <div class="space-y-2 opacity-50 pointer-events-none" id="courseSelect">
+                            <label class="font-label text-sm text-on-surface-variant block">Select Course</label>
+                            <select class="w-full bg-surface-container border border-outline-variant rounded-lg p-3 focus:ring-secondary text-base" name="existing_course">
+                                {% for course in courses %}
+                                    <option value="{{ course.id }}">{{ course.name }}</option>
+                                {% else %}
+                                    <option>No processed courses yet</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <button class="w-full bg-primary text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all" type="submit" id="processButton">
+                            <span class="material-symbols-outlined">rocket_launch</span>
+                            Process Uploads
+                        </button>
+                    </aside>
                 </div>
             </form>
 
-            <section>
-                <h2 class="font-headline text-2xl font-extrabold text-primary mb-4">Uploaded Videos</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {% for video in videos %}
-                        <div class="bg-white border border-outline-variant rounded-xl p-4 flex items-center gap-3">
-                            <span class="material-symbols-outlined text-secondary">movie</span>
-                            <span class="font-semibold text-on-surface-variant">{{ video }}</span>
-                        </div>
+            <section id="library-section">
+                <div class="flex items-center justify-between mb-10">
+                    <h3 class="font-headline text-3xl font-extrabold text-on-surface">My Courses</h3>
+                    <div class="bg-surface-container p-1 rounded-lg flex gap-1">
+                        <button class="p-2 rounded-md bg-white shadow-sm text-secondary transition-all" id="viewToggleCard" type="button" aria-label="Grid view">
+                            <span class="material-symbols-outlined">grid_view</span>
+                        </button>
+                        <button class="p-2 rounded-md text-on-surface-variant hover:bg-surface-container-high transition-all" id="viewToggleList" type="button" aria-label="List view">
+                            <span class="material-symbols-outlined">format_list_bulleted</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="gridView">
+                    {% for course in courses %}
+                        <article class="course-card bg-white border border-outline-variant rounded-xl overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all group cursor-pointer" data-course-id="{{ course.id }}">
+                            <button class="w-full text-left p-6" type="button" aria-expanded="false">
+                                <div class="flex items-start gap-3 mb-4">
+                                    <span class="material-symbols-outlined text-outline cursor-grab active:cursor-grabbing drag-handle shrink-0 mt-1">drag_indicator</span>
+                                    <span class="material-symbols-outlined text-secondary shrink-0 mt-1">folder</span>
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="font-headline text-xl font-extrabold leading-7 break-words">{{ course.name }}</h4>
+                                        <p class="text-sm text-on-surface-variant mt-1">{{ course.videos|length }} video{% if course.videos|length != 1 %}s{% endif %}</p>
+                                    </div>
+                                    <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary shrink-0 course-chevron">expand_more</span>
+                                </div>
+                                <p class="text-on-surface-variant leading-6 mb-6 break-words">{{ course.description }}</p>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-xs bg-secondary-fixed text-on-secondary-fixed px-2 py-1 rounded">Course Folder</span>
+                                    <span class="text-xs bg-surface-container text-on-surface-variant px-2 py-1 rounded">Ready</span>
+                                </div>
+                            </button>
+                            <div class="course-videos hidden border-t border-outline-variant bg-surface-container-lowest px-6 py-4">
+                                <p class="font-label text-xs text-outline uppercase tracking-wide mb-3">Uploaded Videos</p>
+                                <ul class="space-y-2">
+                                    {% for video in course.videos %}
+                                        <li class="flex items-start justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container-low p-3 text-sm text-on-surface-variant">
+                                            <span class="flex min-w-0 items-start gap-2">
+                                                <span class="material-symbols-outlined text-secondary text-lg shrink-0">movie</span>
+                                                <span class="break-words">{{ video }}</span>
+                                            </span>
+                                            <form action="{{ url_for('delete_course_video', course_id=course.id, video_name=video) }}" method="post" onsubmit="return confirm('Delete this video and its processed files?');">
+                                                <button class="rounded-lg p-1 text-danger hover:bg-red-50" type="submit" title="Delete video">
+                                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                                </button>
+                                            </form>
+                                        </li>
+                                    {% else %}
+                                        <li class="text-sm text-outline">No videos in this course yet.</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </article>
                     {% else %}
-                        <p class="text-on-surface-variant">No processed videos yet.</p>
+                        <div class="md:col-span-2 lg:col-span-3 border border-outline-variant bg-white rounded-xl p-8 text-on-surface-variant">
+                            No processed courses yet. Upload a video to create your first searchable course.
+                        </div>
                     {% endfor %}
+                </div>
+
+                <div class="hidden overflow-x-auto bg-white border border-outline-variant rounded-xl" id="listView">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="text-left border-b border-outline-variant">
+                                <th class="py-4 px-6 font-label text-sm text-on-surface-variant">COURSE NAME</th>
+                                <th class="py-4 px-6 font-label text-sm text-on-surface-variant">TYPE</th>
+                                <th class="py-4 px-6 font-label text-sm text-on-surface-variant">STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in courses %}
+                                <tr class="border-b border-outline-variant last:border-b-0 hover:bg-surface-container-low transition-colors">
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center gap-3">
+                                            <span class="material-symbols-outlined text-secondary">folder</span>
+                                            <span class="font-medium break-words">{{ course.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 text-on-surface-variant">Course Folder</td>
+                                    <td class="py-4 px-6 text-on-surface-variant">{{ course.videos|length }} video{% if course.videos|length != 1 %}s{% endif %}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td class="py-6 px-6 text-on-surface-variant" colspan="3">No processed courses yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </section>
         </div>
     </main>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const videoInput = document.getElementById('videoInput');
+        const selectedFileName = document.getElementById('selectedFileName');
+        const uploadForm = document.getElementById('uploadForm');
+        const processButton = document.getElementById('processButton');
+        const courseNameField = document.getElementById('courseNameField');
+        const courseSelect = document.getElementById('courseSelect');
+        const radios = document.querySelectorAll('input[name="course_dest"]');
+        const viewToggleCard = document.getElementById('viewToggleCard');
+        const viewToggleList = document.getElementById('viewToggleList');
+        const gridView = document.getElementById('gridView');
+        const listView = document.getElementById('listView');
+        const selectedFileList = document.getElementById('selectedFileList');
+
+        function showSelectedFiles(files) {
+            const fileList = Array.from(files || []);
+            if (!fileList.length) {
+                selectedFileName.textContent = 'No files selected';
+                selectedFileList.textContent = '';
+                return;
+            }
+
+            selectedFileName.textContent = `${fileList.length} file${fileList.length === 1 ? '' : 's'} selected`;
+            selectedFileList.textContent = fileList.map((file) => file.name).join(', ');
+        }
+
+        videoInput.addEventListener('change', () => {
+            showSelectedFiles(videoInput.files);
+        });
+
+        dropZone.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropZone.classList.add('drop-zone-active');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drop-zone-active');
+        });
+
+        dropZone.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropZone.classList.remove('drop-zone-active');
+            if (event.dataTransfer.files.length) {
+                videoInput.files = event.dataTransfer.files;
+                showSelectedFiles(videoInput.files);
+            }
+        });
+
+        radios.forEach((radio) => {
+            radio.addEventListener('change', () => {
+                const useExisting = document.querySelector('input[name="course_dest"]:checked').value === 'existing';
+                courseNameField.classList.toggle('hidden', useExisting);
+                courseSelect.classList.toggle('opacity-50', !useExisting);
+                courseSelect.classList.toggle('pointer-events-none', !useExisting);
+            });
+        });
+
+        document.querySelectorAll('.course-card > button').forEach((button) => {
+            button.addEventListener('click', () => {
+                const card = button.closest('.course-card');
+                const videos = card.querySelector('.course-videos');
+                const chevron = card.querySelector('.course-chevron');
+                const isOpen = !videos.classList.contains('hidden');
+
+                videos.classList.toggle('hidden', isOpen);
+                button.setAttribute('aria-expanded', String(!isOpen));
+                chevron.textContent = isOpen ? 'expand_more' : 'expand_less';
+            });
+        });
+
+        if (window.Sortable) {
+            new Sortable(gridView, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost'
+            });
+        }
+
+        uploadForm.addEventListener('submit', () => {
+            processButton.disabled = true;
+            processButton.classList.add('opacity-70');
+            processButton.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Processing...';
+        });
+
+        viewToggleCard.addEventListener('click', () => {
+            gridView.classList.remove('hidden');
+            listView.classList.add('hidden');
+            viewToggleCard.classList.add('bg-white', 'shadow-sm', 'text-secondary');
+            viewToggleCard.classList.remove('text-on-surface-variant');
+            viewToggleList.classList.remove('bg-white', 'shadow-sm', 'text-secondary');
+            viewToggleList.classList.add('text-on-surface-variant');
+        });
+
+        viewToggleList.addEventListener('click', () => {
+            gridView.classList.add('hidden');
+            listView.classList.remove('hidden');
+            viewToggleList.classList.add('bg-white', 'shadow-sm', 'text-secondary');
+            viewToggleList.classList.remove('text-on-surface-variant');
+            viewToggleCard.classList.remove('bg-white', 'shadow-sm', 'text-secondary');
+            viewToggleCard.classList.add('text-on-surface-variant');
+        });
+    </script>
 </body>
 </html>
+
+

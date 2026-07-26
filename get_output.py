@@ -3,6 +3,7 @@ import re
 
 import joblib
 import numpy as np
+import pandas as pd
 from dotenv import load_dotenv
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
@@ -13,6 +14,11 @@ load_dotenv()
 DATAFRAME_PATH = "dataframe.joblib"
 PROCESSED_VIDEOS_PATH = "processed_videos.joblib"
 VIDEOS_DIR = "videos"
+VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov", ".mkv", ".avi"}
+
+
+def is_video_file(filename):
+    return os.path.splitext(filename)[1].lower() in VIDEO_EXTENSIONS
 
 
 def get_current_videos():
@@ -22,7 +28,7 @@ def get_current_videos():
     return sorted(
         filename
         for filename in os.listdir(VIDEOS_DIR)
-        if os.path.isfile(os.path.join(VIDEOS_DIR, filename))
+        if os.path.isfile(os.path.join(VIDEOS_DIR, filename)) and is_video_file(filename)
     )
 
 
@@ -45,10 +51,7 @@ def build_dataframe_if_needed():
 
     current_videos = get_current_videos()
     if not current_videos:
-        raise RuntimeError(
-            "dataframe.joblib is missing and no videos were found in the videos folder. "
-            "Upload or add videos first."
-        )
+        return
 
     import process_audio
     import process_data
@@ -67,9 +70,14 @@ def build_dataframe_if_needed():
 
 def load_dataframe():
     build_dataframe_if_needed()
+    if not os.path.exists(DATAFRAME_PATH):
+        empty_df = pd.DataFrame(columns=["video_name", "text", "start", "end", "embedding"])
+        return empty_df, np.empty((0, 0))
+
     loaded_df = joblib.load(DATAFRAME_PATH)
     if loaded_df.empty or "embedding" not in loaded_df:
-        raise RuntimeError("dataframe.joblib does not contain transcript embeddings.")
+        empty_df = pd.DataFrame(columns=["video_name", "text", "start", "end", "embedding"])
+        return empty_df, np.empty((0, 0))
 
     return loaded_df, np.vstack(loaded_df.embedding.values)
 
@@ -142,6 +150,8 @@ def retrieve_chunks(question, top_results=5, video_name=""):
     """
     Returns top matching subtitle chunks.
     """
+    if df.empty or stored_embeddings.size == 0:
+        return []
 
     question_embedding = np.array(create_embedding([question])[0])
 
@@ -411,6 +421,9 @@ def create_quiz(topic, quiz_count=5, video_name=""):
     quiz_count = max(1, min(quiz_count, 20))
 
     chunks = retrieve_chunks(topic, top_results=max(10, quiz_count * 2), video_name=video_name)
+    if not chunks:
+        return "Upload and process a video before generating a quiz.", "", [], []
+
     quiz_output = generate_quiz(topic, chunks, quiz_count, video_name)
     student_quiz, answer_key = split_quiz_output(quiz_output)
     quiz_items = parse_quiz_items(student_quiz, answer_key)
@@ -423,6 +436,8 @@ def ask_question(question):
         return "Please enter a question.", []
 
     chunks = retrieve_chunks(question)
+    if not chunks:
+        return "Upload and process a video before asking questions.", []
 
     answer = generate_response(
         question,
@@ -430,3 +445,4 @@ def ask_question(question):
     )
 
     return answer, chunks
+
