@@ -10,9 +10,72 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 load_dotenv()
 
-# Load once
-df = joblib.load("dataframe.joblib")
-stored_embeddings = np.vstack(df.embedding.values)
+DATAFRAME_PATH = "dataframe.joblib"
+PROCESSED_VIDEOS_PATH = "processed_videos.joblib"
+VIDEOS_DIR = "videos"
+
+
+def get_current_videos():
+    if not os.path.isdir(VIDEOS_DIR):
+        return []
+
+    return sorted(
+        filename
+        for filename in os.listdir(VIDEOS_DIR)
+        if os.path.isfile(os.path.join(VIDEOS_DIR, filename))
+    )
+
+
+def dataframe_needs_update():
+    if not os.path.exists(DATAFRAME_PATH) or not os.path.exists(PROCESSED_VIDEOS_PATH):
+        return True
+
+    current_videos = get_current_videos()
+    try:
+        processed_videos = sorted(joblib.load(PROCESSED_VIDEOS_PATH))
+    except Exception:
+        return True
+
+    return current_videos != processed_videos
+
+
+def build_dataframe_if_needed():
+    if not dataframe_needs_update():
+        return
+
+    current_videos = get_current_videos()
+    if not current_videos:
+        raise RuntimeError(
+            "dataframe.joblib is missing and no videos were found in the videos folder. "
+            "Upload or add videos first."
+        )
+
+    import process_audio
+    import process_data
+    import process_json
+    import process_video
+
+    os.makedirs("audios", exist_ok=True)
+    os.makedirs("json_data", exist_ok=True)
+    os.makedirs("clean_json_data", exist_ok=True)
+
+    process_video.to_audio()
+    process_audio.to_json()
+    process_json.to_clean_json()
+    process_data.to_build_dataframe()
+
+
+def load_dataframe():
+    build_dataframe_if_needed()
+    loaded_df = joblib.load(DATAFRAME_PATH)
+    if loaded_df.empty or "embedding" not in loaded_df:
+        raise RuntimeError("dataframe.joblib does not contain transcript embeddings.")
+
+    return loaded_df, np.vstack(loaded_df.embedding.values)
+
+
+# Load once after making sure the saved dataframe exists.
+df, stored_embeddings = load_dataframe()
 TAG_STOPWORDS = {
     "about", "after", "also", "because", "been", "being", "from", "have",
     "into", "like", "more", "most", "that", "their", "then", "there",
@@ -21,21 +84,29 @@ TAG_STOPWORDS = {
     "just", "some", "than", "them", "were", "very", "video", "course"
 }
 
-embedding_model = SentenceTransformer(
-    "sentence-transformers/all-MiniLM-L6-v2"
-)
+embedding_model = None
+
+
+def get_embedding_model():
+    global embedding_model
+    if embedding_model is None:
+        embedding_model = SentenceTransformer(
+            "sentence-transformers/all-MiniLM-L6-v2"
+        )
+
+    return embedding_model
+
 
 def create_embedding(texts):
     if not texts:
         return []
 
-    return embedding_model.encode(texts, convert_to_numpy=True)
+    return get_embedding_model().encode(texts, convert_to_numpy=True)
 
 
 def reload_dataframe():
     global df, stored_embeddings
-    df = joblib.load("dataframe.joblib")
-    stored_embeddings = np.vstack(df.embedding.values)
+    df, stored_embeddings = load_dataframe()
 
 
 def get_topic_tags(limit=16):

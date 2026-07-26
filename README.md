@@ -82,7 +82,7 @@ Memora uses a mix of local models and API-based LLM generation:
 
 | Task | Tool | Runs where |
 | --- | --- | --- |
-| Video to audio | ffmpeg / imageio-ffmpeg | Local |
+| Video to audio | ffmpeg | Local |
 | Speech transcription | Whisper | Local |
 | Embeddings | Sentence Transformers | Local |
 | Similarity search | scikit-learn cosine similarity | Local |
@@ -112,17 +112,23 @@ Memora uses a mix of local models and API-based LLM generation:
 ├── processed_videos.joblib # Processed video cache
 ├── chat_history.json       # Chat and quiz history
 ├── requirements.txt
-├── .env                    # Local environment variables
+├── Dockerfile              # Docker image definition
+├── docker-compose.yml      # Docker Compose app runner
+├── .dockerignore           # Files excluded from Docker build context
+├── .env.example            # Example environment variables
+├── .env                    # Local environment variables, not committed
 └── LICENSE
 ```
 
 ## Requirements
 
-- Python 3.10 or newer recommended
+- Python 3.10 or newer recommended for local runs
+- Docker Desktop for Docker runs
+- System ffmpeg for local runs
 - Internet connection for first-time model downloads and OpenRouter calls
 - OpenRouter API key
 
-System ffmpeg is optional because the project includes `imageio-ffmpeg`, which provides a bundled ffmpeg binary. If you already have ffmpeg installed and available in PATH, Memora can use that too.
+System ffmpeg is required for video-to-audio conversion when running locally. The Docker setup installs ffmpeg automatically.
 
 ## Installation
 
@@ -204,6 +210,61 @@ Main pages:
 - `/` - chat and quiz sessions
 - `/videos` - upload and process videos
 - `/quiz-report` - quiz history, scores, weak topics, strong topics
+
+
+## Running With Docker
+
+Docker is the easiest way to share and run the project because it installs Python dependencies and ffmpeg inside the container.
+
+1. Make sure Docker Desktop is installed and running.
+
+2. Create your local environment file:
+
+Windows PowerShell:
+
+```powershell
+copy .env.example .env
+```
+
+macOS/Linux:
+
+```bash
+cp .env.example .env
+```
+
+3. Edit `.env` and add your OpenRouter API key:
+
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+```
+
+4. Build and start the app:
+
+```bash
+docker compose up --build
+```
+
+5. Open the app:
+
+```text
+http://127.0.0.1:5000/
+```
+
+After the first build, you can usually start it with:
+
+```bash
+docker compose up
+```
+
+Use `docker compose up --build` again after changing `Dockerfile`, `requirements.txt`, or dependencies.
+
+To stop the app:
+
+```bash
+docker compose down
+```
+
+Docker keeps generated project data in the mounted folders and keeps downloaded model cache in a Docker volume.
 
 ## Running the CLI
 
@@ -322,13 +383,13 @@ Important: the query embedding model and stored chunk embedding model must match
 
 ## Rebuilding Embeddings
 
-If you change videos, transcript files, or the embedding model, rebuild embeddings:
+If `dataframe.joblib` or `processed_videos.joblib` is missing, or if the files in `videos/` changed, the app automatically processes the videos and rebuilds `dataframe.joblib` before loading retrieval data.
+
+You can also manually rebuild embeddings with:
 
 ```bash
 python process_data.py
 ```
-
-Or upload/process a video through the UI, which rebuilds `dataframe.joblib` after processing.
 
 ## Data Files
 
@@ -342,6 +403,51 @@ Generated files:
 - `chat_history.json`
 
 These are runtime/project data files and may become large. Decide whether to commit them based on your project needs.
+
+
+## Sharing on GitHub
+
+Commit the source code and configuration files, but do not commit secrets or large generated artifacts.
+
+Recommended files to commit:
+
+- Python source files such as `app.py`, `get_output.py`, and `process_*.py`
+- `templates/`
+- `requirements.txt`
+- `Dockerfile`
+- `docker-compose.yml`
+- `.dockerignore`
+- `.env.example`
+- `README.md`
+- `LICENSE`
+
+Do not commit:
+
+- `.env`
+- `.venv/`
+- `__pycache__/`
+- large model files
+- generated `.joblib` files, unless you intentionally want to ship prebuilt embeddings
+
+Your current `.gitignore` already ignores `.env`, virtual environments, Python cache folders, and `.joblib` files.
+
+A new user can run the project with:
+
+```bash
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+cd YOUR_REPO_NAME
+cp .env.example .env
+docker compose up --build
+```
+
+On Windows PowerShell, use:
+
+```powershell
+copy .env.example .env
+docker compose up --build
+```
+
+If you do not commit videos or `dataframe.joblib`, users should upload videos through `/videos`. The app will process them and create `dataframe.joblib` automatically.
 
 ## Troubleshooting
 
@@ -359,15 +465,9 @@ If no transcript files appear, processing did not complete.
 
 ### ffmpeg not found
 
-Memora tries to use system ffmpeg first, then falls back to `imageio-ffmpeg`.
+Memora requires system ffmpeg when running locally. Install ffmpeg and make sure it is available on PATH.
 
-If it still fails:
-
-```bash
-pip install imageio-ffmpeg
-```
-
-or install ffmpeg manually and add it to PATH.
+With Docker, ffmpeg is installed automatically by the Dockerfile.
 
 ### LLM returns 429
 

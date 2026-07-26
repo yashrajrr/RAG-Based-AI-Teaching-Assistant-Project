@@ -1,0 +1,24 @@
+services:
+  memora:
+    build: .
+    container_name: memora-app
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:-memora-dev-secret-key}
+      WHISPER_MODEL: ${WHISPER_MODEL:-tiny}
+    volumes:
+      - ./videos:/app/videos
+      - ./audios:/app/audios
+      - ./json_data:/app/json_data
+      - ./clean_json_data:/app/clean_json_data
+      - ./chat_history.json:/app/chat_history.json
+      - ./dataframe.joblib:/app/dataframe.joblib
+      - ./processed_videos.joblib:/app/processed_videos.joblib
+      - model-cache:/root/.cache
+    restart: unless-stopped
+
+volumes:
+  model-cache:

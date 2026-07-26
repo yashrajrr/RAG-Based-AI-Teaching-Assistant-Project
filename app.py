@@ -138,23 +138,8 @@ def process_uploaded_videos():
 
 def get_ffmpeg_exe():
     ffmpeg_exe = shutil.which("ffmpeg")
-    if ffmpeg_exe:
-        return ffmpeg_exe
-
-    try:
-        import imageio_ffmpeg
-    except ImportError as error:
-        raise RuntimeError(
-            "ffmpeg is not installed. Install ffmpeg or run: pip install imageio-ffmpeg"
-        ) from error
-
-    bundled_exe = imageio_ffmpeg.get_ffmpeg_exe()
-    ffmpeg_dir = os.path.join("D:\\tmp", "memora-ffmpeg")
-    os.makedirs(ffmpeg_dir, exist_ok=True)
-    ffmpeg_exe = os.path.join(ffmpeg_dir, "ffmpeg.exe")
-
-    if not os.path.exists(ffmpeg_exe):
-        shutil.copy2(bundled_exe, ffmpeg_exe)
+    if not ffmpeg_exe:
+        raise RuntimeError("ffmpeg is not installed or available on PATH.")
 
     return ffmpeg_exe
 
@@ -345,4 +330,4 @@ def clear_history():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False)
+    app.run(host="0.0.0.0", port=5000,debug=True, use_reloader=False)
